@@ -1,143 +1,46 @@
-const Discord = require("discord.js");
+const fs = require('fs');
+const Discord = require('discord.js');
+const { prefix, token } = require('./config.json');
+const Keyv = require('keyv');
+var interval;
+
+const keyv = new Keyv();
+keyv.on('error', err => console.log('Connection Error', err));
+
+(async () => {
+  await keyv.set('foo', 'duh');
+
+  console.log(await keyv.get('foo'));
+})();
+
 const client = new Discord.Client();
-const token = require("./token.js");
-const usersJson = require("./users.json");
-const fileName = "./users.json";
-const fs = require("fs");
-const Enmap = require("enmap");
-const config = require("./config.json");
+client.commands = new Discord.Collection();
 
-client.points = new Enmap({
-  name: "points",
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+	const command = require(`./commands/${file}`);
+	client.commands.set(command.name, command);
+}
+
+client.once('ready', () => {
+	console.log('Ready!');
 });
 
-client.points.defer.then(() => {
-  console.log(client.points.size + " keys loaded");
-  client.points.set("blah", "foo");
-  console.log(client.points.get("blah"));
-});
+client.on('message', message => {
+	if (!message.content.startsWith(prefix) || message.author.bot) return;
 
-client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
-});
+	const args = message.content.slice(prefix.length).trim().split(/ +/);
+	const command = args.shift().toLowerCase();
 
-client.on("message", (message) => {
-  const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
-  const command = args.shift().toLowerCase();
-  if (command === "mention") {
-    let member = args[0];
-    message.channel.send(`Hi there, ${member}!`);
-  }
-});
+	if (!client.commands.has(command)) return;
 
-
-client.on("message", (message) => {
-  if (message.author.bot) return;
-  if (message.guild) {
-    const key = `${message.guild.id}-${message.author.id}`;
-    client.points.ensure(key, {
-      user: message.author.id,
-      guild: message.guild.id,
-      points: 0,
-      level: 1,
-    });
-    
-
-    client.points.inc(key, "points");
-
-    const curLevel = Math.floor(
-      0.1 * Math.sqrt(client.points.get(key, "points"))
-    );
-
-    if (client.points.get(key, "level") < curLevel) {
-      message.reply(
-        `You've leveled up to level **${curLevel}**! Ain't that dandy?`
-      );
-      client.points.set(key, curLevel, "level");
-    }
-  }
-  if (message.content.indexOf(config.prefix) !== 0) return;
-
-  const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
-  const command = args.shift().toLowerCase();
-
-  if (command === "points") {
-    const key = `${message.guild.id}-${message.author.id}`;
-    return message.channel.send(
-      `You currently have ${client.points.get(
-        key,
-        "points"
-      )} points, and are level ${client.points.get(key, "level")}!`
-    );
-  }
-});
-
-client.on("message", (message) => {
-  if (message.author.bot) return;
-  const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
-  const command = args.shift().toLowerCase();
-  let counter = 0;
-  if (command === "newCount") {
-    client.points.set(counter, 0, "counter");
-    message.channel.send(`New counter set at ${client.points.get("counter")}`);
-  }
-  });
-
-client.on("message", (msg) => {
-  if (msg.content === ".ghPay") {
-    msg.channel.send(
-      "Grubhub pay FAQ: https://driver-support.grubhub.com/hc/en-us/categories/115001254786-Getting-Paid"
-    );
-  }
-});
-
-client.on("message", (message) => {
-  if (message.content.toLowerCase() === ".whichSub".toLowerCase()) {
-    const key = `${message.guild.id}-${message.author.id}`;
-    message.channel.send(
-      `My records indicate you came from the subreddit ${client.points.get(key, "subreddit")}.`)
-  }
-});
-
-client.on("message", (msg) => {
-  if (msg.content === ".pants") {
-    msg.channel.send("Pants. Commencing 8-hour Pants Interval.");
-    var interval = setInterval(function () {
-      msg.channel.send("Pants.");
-    }, 1000 * 60 * 60 * 8);
-  }
-});
-
-client.on("message", (msg) => {
-  if (msg.content === ".ddPay") {
-    msg.channel.send(
-      "Dasher pay FAQ: https://help.doordash.com/dashers/s/topic/0TO1a0000007fAsGAI/payments?language=en_US"
-    );
-  }
-});
-
-client.on("message", (msg) => {
-  if (msg.content.toLowerCase() === ".throwStone".toLowerCase()) {
-    usersJson.stones += 1;
-    fs.writeFile(
-      fileName,
-      JSON.stringify(usersJson, null, 2),
-      function writeJSON(err) {
-        if (err) return console.log(err);
-        console.log(JSON.stringify(usersJson));
-        console.log("writing to " + fileName);
-      }
-    );
-    msg.channel.send(
-      `You threw a stone! ${usersJson.stones} stones have been thrown.`
-    );
-  }
-});
-
-client.on("message", (msg) => {
-  if (msg.content === "Hey CourierBot, are you still there?") {
-    msg.channel.send("Yup.");
-  }
+	try {
+		client.commands.get(command).execute(message, args);
+	} catch (error) {
+		console.error(error);
+		message.reply('there was an error trying to execute that command!');
+	}
 });
 
 client.login(token);
