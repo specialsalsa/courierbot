@@ -11,6 +11,7 @@ CURRENT LIST OF COMMANDS:
      - Sends a recurring message in the channel it was executed.
      - Parameters: `.recurringmessage <interval (h, m, s)> Message goes here`
      - Stops message via command `.stopmessage`
+     - Only executes if sent by a member with Admin, Mod, Trial Mod, or Developer roles
      
 .ddpay
     - Sends DoorDash FAQ page for Dasher pay.
