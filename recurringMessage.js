@@ -1,16 +1,14 @@
-const Keyv = require("keyv")
-
 module.exports = {
     name: 'recurringmessage',
     description: 'Allows staff to set and reset recurring messages.',
     execute(message, args) {
-        if (member.roles.cache.some(role => role.name === 'Mod')
-        || member.roles.cache.some(role => role.name === 'Admin')
-        || member.roles.cache.some(role => role.name === 'Trial Mod')
-        || member.roles.cache.some(role => role.name === 'Developer')
-        ) {
         let unit = args[0][args[0].length - 1]
         let timer = args[0].slice(0, -1);
+        if (message.member.roles.cache.find(r => r.name === "Admin") 
+        || message.member.roles.cache.find(r => r.name === "Mod") 
+        || message.member.roles.cache.find(r => r.name === "Trial Mod")
+        || message.member.roles.cache.find(r => r.name === "Developer")
+         ) {
         if (unit == 'm') {
             timer = timer * 1000 * 60;
         } else if (unit == 'h') {
@@ -27,4 +25,4 @@ module.exports = {
             );}, timer);
         }
     }
-    };
+};
