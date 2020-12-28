@@ -6,7 +6,6 @@ module.exports = {
         let timer = args[0].slice(0, -1);
         if (message.member.roles.cache.find(r => r.name === "Admin") 
         || message.member.roles.cache.find(r => r.name === "Mod") 
-        || message.member.roles.cache.find(r => r.name === "Trial Mod")
         || message.member.roles.cache.find(r => r.name === "Developer")
          ) {
         if (unit == 'm') {
