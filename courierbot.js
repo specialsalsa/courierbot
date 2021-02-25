@@ -1,9 +1,33 @@
 const fs = require('fs');
 const Discord = require('discord.js');
 const { prefix, token } = require('./config.json');
+const users = require('./users.json');
+// const Enmap = require('enmap');
+const Endb = require('endb');
+
+// fs.readFile('./users.json', 'utf8', (err, jsonString) => {
+// 	if (err) {
+// 		console.log("Error reading file from disk:", err);
+// 		return
+// 	}
+// 	try {
+// 		const userStones = JSON.parse(jsonString);
+// 		console.log("Stones:", userStones.stones);
+// 		console.log('Stones: ')
+// 	} catch (err) {
+// 		console.log('Error parsing JSON string:', err)
+// 	}
+// });
+
+
 
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
+
+
+const endb = new Endb('sqlite://courierbot.sqlite');
+
+module.exports.endb = endb;
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
@@ -17,6 +41,30 @@ const cooldowns = new Discord.Collection();
 client.once('ready', () => {
 	console.log('Ready!');
 });
+
+// module.exports = {
+// 	settings: new Enmap({
+// 	  name: "settings",
+// 	  autoFetch: true,
+// 	  fetchAll: false
+// 	}),
+// 	users: new Enmap("users"),
+// 	tags: new Enmap({ name: "tags" }),
+// 	stones: new Enmap({name: "stones"})
+//   };
+
+// --------- Enmap WORKING configuration ------------
+
+// client.stones = new Enmap({name: "stones"});
+
+// module.exports.stones = client.stones;
+
+
+// client.stones.set("stones", 0);
+
+// client.stones.defer.then(() => {
+// 	console.log(client.stones.size + " keys loaded");
+// });
 
 client.on('message', message => {
 	if (!message.content.startsWith(prefix) || message.author.bot) return;
@@ -77,5 +125,6 @@ client.on('message', message => {
 		message.reply('there was an error trying to execute that command!');
 	}
 });
+
 
 client.login(token);
