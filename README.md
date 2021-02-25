@@ -21,5 +21,16 @@ CURRENT LIST OF COMMANDS:
     
 .ping
     - Sends "Pong."
+
+.throwstone
+    - Throws a stone and adds one to the number of stones thrown, saved in the SQLite database. I made this to learn how to store and retrieve data with SQLite, Enmap, and Node.
+
+.pants
+    - Randomly selects an image of pants from a JSON object of URLs :P
+
+.pantsinterval
+    - Creates an interval where the bot will post "Pants." every 8 hours.
+    - Interval can be stopped by mods/admins with command `.stopmessage` 
+
     
-Bot is currently running on a Linode instance with all dependencies installed (node.js, Keyv, Discord token file). As the bot's usage is so specific to our server, I doubt anyone would want to run it themselves, but if you're interested in that for some reason, feel free to contact me.
+Bot is currently running on a Linode instance with all dependencies installed (node.js, endb, sqlite3, sql, Discord token file). As the bot's usage is so specific to our server, I doubt anyone would want to run it themselves, but if you're interested in that for some reason, feel free to contact me.
