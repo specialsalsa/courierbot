@@ -213,10 +213,14 @@ client.on('message', async message => {
 			let eggs = await cbeaster.get(message.member.id);
 			eggs++;
 			await cbeaster.set(message.member.id, eggs);
-			message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
-			message.channel.send(`${message.member.nickname} now has ${await cbeaster.get(message.member.id)} eggs.`);
+		message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
+		if (await cbeaster.get(message.member.id) === 1) {
+			message.channel.send(`${message.member.nickname} now has 1 egg.`);
+		} else {
+		message.channel.send(`${message.member.nickname} now has ${await cbeaster.get(message.member.id)} eggs.`);
 		}
 	}
+}
 });
 
 
