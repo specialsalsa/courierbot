@@ -207,7 +207,7 @@ client.on('message', async message => {
 });
 
 client.on('message', async message => {
-	if (await cbeaster.get(message.member.id)) {
+	if (await cbeaster.get(message.member.id) !== null) {
 		if (message.content.length === 27 ||
 			message.content.length === 81) {
 			let eggs = await cbeaster.get(message.member.id);
