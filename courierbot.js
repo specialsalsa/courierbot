@@ -4,6 +4,7 @@ const { prefix, token } = require('./config.json');
 const users = require('./users.json');
 // const Enmap = require('enmap');
 const Endb = require('endb');
+const roleClaim = require('./role-claim');
 
 // fs.readFile('./users.json', 'utf8', (err, jsonString) => {
 // 	if (err) {
@@ -38,9 +39,43 @@ for (const file of commandFiles) {
 
 const cooldowns = new Discord.Collection();
 
-client.once('ready', () => {
+client.on('ready', () => {
 	console.log('Ready!');
+
+	// roleClaim(client)
 });
+
+// playing with Mongoose
+
+// const mongoose = require('mongoose');
+// mongoose.connect('mongodb://localhost/test', {useNewUrlParser: true, useUnifiedTopology: true});
+
+// const db = mongoose.connection;
+// db.on('error', console.error.bind(console, 'connection error:'));
+// db.once('open', function() {
+// 	const kittySchema = new mongoose.Schema({
+// 		name: String
+// 	});
+
+// 	kittySchema.methods.speak = function () {
+// 		const greeting = this.name
+// 		  ? "Meow name is " + this.name
+// 		  : "I don't have a name";
+// 		console.log(greeting);
+// 	  }
+
+// 	const Kitten = mongoose.model('Kitten', kittySchema);
+
+// 	const silence = new Kitten({ name: 'Silence' });
+// 	console.log(silence.name);
+
+// 	silence.save(function (err, silence) {
+// 		if (err) return console.error(err);
+// 	});
+
+// });
+
+
 
 // module.exports = {
 // 	settings: new Enmap({
@@ -125,6 +160,62 @@ client.on('message', message => {
 		message.reply('there was an error trying to execute that command!');
 	}
 });
+
+client.on('message', message => {
+	if (message.content.toLowerCase().includes('dabby')) {
+		let reactionEmoji = message.guild.emojis.cache.find(emoji => emoji.name === 'dab');
+		message.react(reactionEmoji);
+	};
+	
+	if (message.content.toLowerCase().includes('egg')) {
+		if (message.author.bot) return;
+		message.react('🥚');
+	};
+	
+	if (message.content.toLowerCase().includes('bread')) {
+		message.react('🍞');
+	};
+	
+	if (message.content.toLowerCase().includes('pants')) {
+		message.react('👖');
+	};
+	
+	if (message.content.toLowerCase().includes('secret') || message.content.toLowerCase().includes('abc')) {
+		message.react('🤫');
+	};
+
+	if (message.content.toLowerCase().includes('chicken')) {
+		message.react('🐣');
+	};
+
+	if (message.content.toLowerCase().includes('easter')) {
+		message.react('🎊');
+	};
+
+	if (message.content.toLowerCase().includes('sun')) {
+		message.react('🌞');
+	}
+});
+
+const cbeaster = new Endb('sqlite://cbeaster.sqlite');
+
+client.on('message', async message => {
+	if (message.content.includes(".addme")) {
+		await cbeaster.set(message.member.id, 0);
+		message.channel.send(`Successfully added ${message.member.nickname} to the game!`);
+	}
+});
+
+client.on('message', async message => {
+	if (message.content.length === 27 ||
+		message.content.length === 81) {
+		let eggs = await cbeaster.get(message.member.id);
+		eggs++;
+		await cbeaster.set(message.member.id, eggs);
+		message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
+		message.channel.send(`${message.member.nickname} now has ${await cbeaster.get(message.member.id)} eggs.`);
+	}
+})
 
 
 client.login(token);
