@@ -207,15 +207,17 @@ client.on('message', async message => {
 });
 
 client.on('message', async message => {
-	if (message.content.length === 27 ||
-		message.content.length === 81) {
-		let eggs = await cbeaster.get(message.member.id);
-		eggs++;
-		await cbeaster.set(message.member.id, eggs);
-		message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
-		message.channel.send(`${message.member.nickname} now has ${await cbeaster.get(message.member.id)} eggs.`);
+	if (await cbeaster.get(message.member.id) !== null) {
+		if (message.content.length === 27 ||
+			message.content.length === 81) {
+			let eggs = await cbeaster.get(message.member.id);
+			eggs++;
+			await cbeaster.set(message.member.id, eggs);
+			message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
+			message.channel.send(`${message.member.nickname} now has ${await cbeaster.get(message.member.id)} eggs.`);
+		}
 	}
-})
+});
 
 
 client.login(token);
