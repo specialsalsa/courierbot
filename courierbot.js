@@ -200,27 +200,20 @@ client.on('message', message => {
 const cbeaster = new Endb('sqlite://cbeaster.sqlite');
 
 client.on('message', async message => {
-	if (message.content.includes(".addme")) {
-		await cbeaster.set(message.member.id, 0);
-		message.channel.send(`Successfully added ${message.member.nickname} to the game!`);
-	}
-});
-
-client.on('message', async message => {
 	if (await cbeaster.get(message.member.id) !== null) {
 		if (message.content.length === 27 ||
 			message.content.length === 81) {
 			let eggs = await cbeaster.get(message.member.id);
 			eggs++;
 			await cbeaster.set(message.member.id, eggs);
-		message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
-		if (await cbeaster.get(message.member.id) === 1) {
-			message.channel.send(`${message.member.nickname} now has 1 egg.`);
-		} else {
-		message.channel.send(`${message.member.nickname} now has ${await cbeaster.get(message.member.id)} eggs.`);
+			message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
+			message.channel.send(`${message.member.nickname} now has ${await cbeaster.get(message.member.id)} eggs.`);
 		}
+	} else {
+		await cbeaster.set(message.member.id, 1);
+		message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
+		message.channel.send(`${message.member.nickname} now has 1 egg.`);
 	}
-}
 });
 
 
