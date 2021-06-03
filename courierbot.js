@@ -2,23 +2,12 @@ const fs = require('fs');
 const Discord = require('discord.js');
 const { prefix, token } = require('./config.json');
 const users = require('./users.json');
-// const Enmap = require('enmap');
 const Endb = require('endb');
 const roleClaim = require('./role-claim');
+const egg = require('./commands/egg');
+const database = require('./database');
+const { result } = require('lodash');
 
-// fs.readFile('./users.json', 'utf8', (err, jsonString) => {
-// 	if (err) {
-// 		console.log("Error reading file from disk:", err);
-// 		return
-// 	}
-// 	try {
-// 		const userStones = JSON.parse(jsonString);
-// 		console.log("Stones:", userStones.stones);
-// 		console.log('Stones: ')
-// 	} catch (err) {
-// 		console.log('Error parsing JSON string:', err)
-// 	}
-// });
 
 
 
@@ -29,6 +18,8 @@ client.commands = new Discord.Collection();
 const endb = new Endb('sqlite://courierbot.sqlite');
 
 module.exports.endb = endb;
+
+module.exports.client = client;
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
@@ -45,61 +36,73 @@ client.on('ready', () => {
 	// roleClaim(client)
 });
 
-// playing with Mongoose
+// connecting to database
+const con = database.con;
 
-// const mongoose = require('mongoose');
-// mongoose.connect('mongodb://localhost/test', {useNewUrlParser: true, useUnifiedTopology: true});
-
-// const db = mongoose.connection;
-// db.on('error', console.error.bind(console, 'connection error:'));
-// db.once('open', function() {
-// 	const kittySchema = new mongoose.Schema({
-// 		name: String
-// 	});
-
-// 	kittySchema.methods.speak = function () {
-// 		const greeting = this.name
-// 		  ? "Meow name is " + this.name
-// 		  : "I don't have a name";
-// 		console.log(greeting);
-// 	  }
-
-// 	const Kitten = mongoose.model('Kitten', kittySchema);
-
-// 	const silence = new Kitten({ name: 'Silence' });
-// 	console.log(silence.name);
-
-// 	silence.save(function (err, silence) {
-// 		if (err) return console.error(err);
-// 	});
-
-// });
+con.connect(function(err) {
+	if (err) throw err;
+	console.log('Connected!');
+});
 
 
 
-// module.exports = {
-// 	settings: new Enmap({
-// 	  name: "settings",
-// 	  autoFetch: true,
-// 	  fetchAll: false
-// 	}),
-// 	users: new Enmap("users"),
-// 	tags: new Enmap({ name: "tags" }),
-// 	stones: new Enmap({name: "stones"})
-//   };
-
-// --------- Enmap WORKING configuration ------------
-
-// client.stones = new Enmap({name: "stones"});
-
-// module.exports.stones = client.stones;
+// object of role rankings
+const roles = {
+	"Admin": {rank: 1},
+	"Mod": {rank: 2},
+	"Lead Developer": {rank: 3},
+	"Member": {rank: 4},
+	"Unverified": {rank: 5}
+}
 
 
-// client.stones.set("stones", 0);
+// adding users to database
+client.on('message', message => {
+		let username = message.author.username;
+		let kicked = 0;
 
-// client.stones.defer.then(() => {
-// 	console.log(client.stones.size + " keys loaded");
-// });
+		// determining highest role rank out of five roles listed above
+		let filteredRoles = [];
+		let highestRoleRank = 5;
+		for (role in roles) {
+		filteredRoles = message.member.roles.cache.filter(r => r.name == role);
+		}
+		filteredRoles.forEach((role) => {
+			if (roles[role].rank < highestRole) {
+				highestRoleRank = roles[role].rank;
+			}
+		});
+		
+		let id_user_type = highestRoleRank;
+		let discordID = message.member.id;
+		let query = 'SELECT username FROM nunops_bot.user WHERE username = ?;'
+		con.query(query, message.author.username, (err, result, field) => {
+			if (result.length === 0) {
+				let query = 'INSERT IGNORE INTO nunops_bot.user (discord_user_id, username, kicked, id_user_type) VALUES (?, ?, ?, ?);'
+				con.query(query, [discordID, username, kicked, id_user_type], (err, result) => {
+					if (err) throw err;
+					
+				});
+			}
+		})
+})
+
+
+client.on('message', message => {
+	if (message.content.includes('testsomeshit')) {
+		let filteredRoles = [];
+		let highestRoleRank = 99;
+		for (role in roles) {
+		filteredRoles = message.member.roles.cache.filter(r => r.name == role);
+		}
+		filteredRoles.forEach((role) => {
+			if (roles[role].rank < highestRole) {
+				highestRoleRank = roles[role].rank;
+			}
+		});
+		
+	}
+})
 
 client.on('message', message => {
 	if (!message.content.startsWith(prefix) || message.author.bot) return;
@@ -161,30 +164,28 @@ client.on('message', message => {
 	}
 });
 
-client.on('message', message => {
-	if (message.content.toLowerCase().includes('dabby')) {
-		let reactionEmoji = message.guild.emojis.cache.find(emoji => emoji.name === 'dab');
-		message.react(reactionEmoji);
-	};
-	
-	if (message.content.toLowerCase().includes('egg')) {
-		if (message.author.bot) return;
-		message.react('🥚');
-	};
-	
-	if (message.content.toLowerCase().includes('bread')) {
-		message.react('🍞');
-	};
-	
-	if (message.content.toLowerCase().includes('pants')) {
-		message.react('👖');
-	};
-	
-	if (message.content.toLowerCase().includes('secret') || message.content.toLowerCase().includes('abc')) {
-		message.react('🤫');
-	};
+client.on('ready', async () => {
+	await client.user.setPresence({ activity: { name: `I'm helping!`, type: 'PLAYING'}, status: 'online' });
+});
 
-	if (message.content.toLowerCase().includes('chicken')) {
+client.on('message', message => {
+	if (databases[message.guild.id].isOn == 0) return;
+	let dabEmoji = message.guild.emojis.cache.find(emoji => emoji.name === 'dab');
+
+
+	let triggerWords = { bread: '🍞', pants: '👖', secret: '🤫', abc: '🤫', dabby: dabEmoji}
+
+	for (word in triggerWords) {
+		if (message.content.toLowerCase().includes(word)) {
+			if (message.author.bot) return;
+			if (message.content[0] === '.') return;
+			message.react(triggerWords[word]);
+		}
+	}
+
+	// easter words
+
+/* 	if (message.content.toLowerCase().includes('chicken')) {
 		message.react('🐣');
 	};
 
@@ -194,27 +195,254 @@ client.on('message', message => {
 
 	if (message.content.toLowerCase().includes('sun')) {
 		message.react('🌞');
-	}
+	} */
 });
 
 const cbeaster = new Endb('sqlite://cbeaster.sqlite');
 
+const cbeasterSecret = new Endb('sqlite://cbeastersecret.sqlite');
+
+module.exports.cbeasterSecret = cbeasterSecret;
+
+module.exports.cbeaster = cbeaster;
+
+const zenbog = new Endb('sqlite://zenbog.sqlite');
+
+const zenbogsecret = new Endb('sqlite://zenbogsecret.sqlite');
+
+module.exports.zenbogsecret = zenbogsecret;
+
+module.exports.zenbog = zenbog;
+
+const databases = { '531182018571141132': {easter: 'cbeaster', secret: 'cbeasterSecret', isOn: 0 }, '768557939052249090': { easter: 'zenbog', secret: 'zenbogsecret', isOn: 1}};
+
+module.exports.databases = databases;
+
+// Easter egg hunt
+
+// client.on('message', async message => {
+// 	if (databases[message.guild.id].isOn == 0) return;
+// 	if (message.content.length === 37 ||
+// 	message.content.length === 81) {
+// 		findEgg(message);
+// 	}
+// });
+
+// client.on('message', async message => {
+// 	if (message.content.includes('.testshit')) {
+// 		console.log(databases['768557939052249090'].secret)
+// 	}
+// 	});
+
+
+
+
+
+
+const findEgg = async (message) => {
+	let easterDB = this[databases[message.guild.id].easter];
+	let currentEggs = await easterDB.get(message.member.id);
+	if (!currentEggs) {
+		await easterDB.set(message.member.id, 1);
+		message.channel.send(`Congrats, ${message.member.displayName}! You have found an egg!`);
+		message.channel.send(`${message.member.displayName} now has 1 egg.`);
+	} else {
+		currentEggs++;
+		await easterDB.set(message.member.id, currentEggs);
+		message.channel.send(`Congrats, ${message.member.displayName}! You have found an egg!`);
+		message.channel.send(`${message.member.displayName} now has ${currentEggs} eggs.`);
+	}
+
+}
+
+
+// gave me an egg for testing purposes
 client.on('message', async message => {
-	if (message.content.length === 27 ||
-	message.content.length === 81) {
-			if (await cbeaster.get(message.member.id) === null) {
-				await cbeaster.set(message.member.id, 1);
-				message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
-				message.channel.send(`${message.member.nickname} now has 1 egg.`);
-			} else {
-				let eggs = await cbeaster.get(message.member.id);
-				eggs++;
-				await cbeaster.set(message.member.id, eggs);
-				message.channel.send(`Congrats, ${message.member.nickname}! You have found an egg!`);
-				message.channel.send(`${message.member.nickname} now has ${await cbeaster.get(message.member.id)} eggs.`);
+	if (message.content.toLowerCase().includes('.gibegg')) {
+		let easterDB = this[databases[message.guild.id].easter];
+		// if (message.member.roles.cache.find(r => r.name === "Lead Developer")) {
+			let authorEggs = await easterDB.get(message.member.id);
+			authorEggs++;
+			await easterDB.set(message.member.id, authorEggs);
+			message.channel.send(`There, I gave you an egg. Cheater.`);
+			message.channel.send(`${message.member.displayName} now has ${authorEggs} eggs.`);
+		}
+	// }
+})
+
+
+// listed members with eggs for easter event
+
+// client.on('message', async message => {
+// 	if (message.content.toLowerCase().includes('leaderboard')) {
+// 	let membersWithEggs = message.guild.members.cache.filter(async m => await cbeaster.get(m.id) !== undefined);
+	
+// 	let eggList = membersWithEggs.map(async m => `${m.username}: ${await cbeaster.get(m.id)} \n`);
+
+// 	message.channel.send(`List of members with eggs: \n\n ${eggList}`)
+
+// 	}
+// });
+
+
+
+
+// birthdays
+
+client.on('ready', async () => {
+	await birthdays.set('triggeredBirthday', 0);
+});
+
+const birthdays = new Endb('sqlite://birthdays.sqlite');
+module.exports.birthdays = birthdays;
+
+client.on('message', async message => {
+	let thisDateUser = await birthdays.get(message.member.id);
+	thisDateUser = new Date(thisDateUser);
+	let nowDate = new Date();
+	let todayDate = nowDate.getDate();
+	let todayMonth = nowDate.getMonth() + 1;
+
+	if (await birthdays.get('triggeredBirthday') == 0) {
+	if (todayMonth == thisDateUser.getMonth() + 1 && todayDate == thisDateUser.getDate()) {
+		await birthdays.set('triggeredBirthday', 1);
+		message.channel.send(`HAPPY BIRTHDAY, ${message.author}!!!`);
+	}
+}
+	
+});
+
+
+const tacoIngredients = { shell: 'shell', lettuce: 'lettuce', cheese: 'cheese', tomatoes: 'tomatoes', beef: 'beef', "hot sauce": 'hot sauce', guacamole: 'guacamole', beans: 'beans' };
+
+module.exports.tacoIngredients = tacoIngredients;
+
+// Cinco De Mayo
+
+const tacos = new Endb('sqlite://tacos.sqlite');
+module.exports.tacos = tacos;
+
+
+const messageCounts = new Endb('sqlite://messagecounts.sqlite');
+module.exports.messageCounts = messageCounts;
+
+
+
+// function to find taco ingredients for 5/5 event
+const findIngredient = async (message) => {
+		let currentIngredients = await tacos.get(message.member.id);
+		if (!currentIngredients) {
+			currentIngredients = { shell: 0, lettuce: 0, cheese: 0, tomatoes: 0, beef: 0 }
+		}
+		let thisIngredient = Object.keys(tacoIngredients)[Math.floor(Math.random()*Object.keys(tacoIngredients).length)];
+		if (!currentIngredients[thisIngredient]) {
+		currentIngredients[thisIngredient] = 1;
+		} else {
+		currentIngredients[thisIngredient]++;
+		};
+		await tacos.set(message.member.id, currentIngredients);
+		message.channel.send(`Congrats, ${message.author.username}! You have found a taco ingredient! One ${thisIngredient} has been added to your collection.`);
+		
+}
+
+
+
+// gave taco ingredients for 5/5 event
+
+// client.on('message', async message => {
+// 	let thisUser = message.member.id;
+// 	let userMessageCount = await messageCounts.get(message.member.id);
+// 	if (!userMessageCount) userMessageCount = 1;
+// 	switch(userMessageCount) {
+// 		case 10:
+// 			findIngredient(message);
+// 			break;
+// 		case 30:
+// 			findIngredient(message);
+// 			break;
+// 		case 60:
+// 			findIngredient(message);
+// 			break;
+// 		case 100:
+// 			findIngredient(message);
+// 			break;
+// 		case 150:
+// 			findIngredient(message);
+// 			userMessageCount = 0;
+// 			await messageCounts.set(thisUser, userMessageCount);
+// 			break;
+// 	}
+// });
+
+
+
+
+// leaderboard command for easter event
+client.on('message', async message => {
+	if (message.content.toLowerCase().includes('.egg leaderboard')) {
+		let easterDB = this[databases[message.guild.id].easter];
+		let allUserIDs = [];
+		let eggList = [];
+		
+		allUserIDs.push(await easterDB.all());
+
+		
+
+		for (let i of allUserIDs[0]) {
+			if (i.key !== 0) {
+				let user = await message.guild.members.fetch(i.key);
+				if (user !== undefined) {
+
+				eggList.push([user.user.username, i.value])
+				}
 			}
 		}
+
+		eggList.sort(function (a, b) {
+			return b[1] - a[1];
+		});
+
+		eggList = eggList.filter(item => item[1] >= 1);
+
+		let newString = '';
+
+		eggList.forEach(item => {
+			newString += `${item[0]}: ${item[1]} \n \n`
+		});
+
+		message.channel.send(`**Egg Leaderboard:** \n\n ${newString}`);
+	}
 });
+
+
+
+// cleared easter egg stash for staff for equal participation in egg hunt
+
+// client.on('message', async message => {
+// 	if (message.content.includes('.nukestaff')) {
+// 		let allUserIDs = [];
+
+// 		allUserIDs.push(await cbeaster.all());
+
+// 		let staffRoles = ['Mod', 'Trial Mod', 'Admin', 'Lead Developer', 'CourierBot'];
+
+// 		for (i of allUserIDs[0]) {
+// 			if (i.key !== 0) {
+// 				let user = await message.guild.members.fetch(i.key);
+// 				if (user.roles.cache.some(r => staffRoles.includes(r))) {
+// 					await cbeaster.set(i.key, 0);
+// 				}
+// 				}
+// 			}
+// 		}
+// 	});
+
+
+
+
+
+
+
 
 
 client.login(token);
