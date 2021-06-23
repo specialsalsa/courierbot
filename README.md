@@ -7,30 +7,28 @@ This project is to benefit the Couriers server, and also serves as a way for me 
 
 CURRENT LIST OF COMMANDS:
 
- .recurringmessage
-     - Sends a recurring message in the channel it was executed.
-     - Parameters: `.recurringmessage <interval (h, m, s)> Message goes here`
-     - Stops message via command `.stopmessage`
-     - Only executes if sent by a member with Admin, Mod, Trial Mod, or Developer roles
-     
-.ddpay
-    - Sends DoorDash FAQ page for Dasher pay.
-    
-.ghpay
-    - Sends GrubHub FAQ page for driver pay.
-    
-.ping
-    - Sends "Pong."
 
-.throwstone
-    - Throws a stone and adds one to the number of stones thrown, saved in the SQLite database. I made this to learn how to store and retrieve data with SQLite, Enmap, and Node.
+.worth [$amount] [distance] - calculates dollars per mile of an order
+   - example: .worth $10 5mi
+    > This order pays $2/mi.
 
-.pants
-    - Randomly selects an image of pants from a JSON object of URLs :P
+.pants - displays a random image of pants
 
-.pantsinterval
-    - Creates an interval where the bot will post "Pants." every 8 hours.
-    - Interval can be stopped by mods/admins with command `.stopmessage` 
+.ddPay - links to the Doordash FAQ article on payment
+.ghPay - links to the GrubHub FAQ article on payment
+
+.setbirthday [2-digit month] [2-digit day] - sets your birthday in the database and gives you a happy birthday message on your birthday
+    - example: .setbirthday 12 25
+     > Successfully set your birthday!
+
+.recurringmessage [interval] [message] - allows staff to set a recurring message on an interval
+    - example: .recurringmessage 12h Pants.
+     > [Every 12 hours] Pants.
+ .stopmessage - clears recurring message
+
+.rolecount [role] - counts the number of members with a certain role (case sensitive)
+    - example: .rolecount Doordash
+     > Number of members with role "Doordash": 180
 
     
 Bot is currently running on a Linode instance with all dependencies installed (node.js, endb, sqlite3, sql, Discord token file). As the bot's usage is so specific to our server, I doubt anyone would want to run it themselves, but if you're interested in that for some reason, feel free to contact me.
