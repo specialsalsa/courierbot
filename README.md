@@ -18,16 +18,16 @@ CURRENT LIST OF COMMANDS:
 .ghPay - links to the GrubHub FAQ article on payment
 
 .setbirthday [2-digit month] [2-digit day] - sets your birthday in the database and gives you a happy birthday message on your birthday
-    - example: .setbirthday 12 25
+   - example: .setbirthday 12 25
      > Successfully set your birthday!
 
 .recurringmessage [interval] [message] - allows staff to set a recurring message on an interval
-    - example: .recurringmessage 12h Pants.
+   - example: .recurringmessage 12h Pants.
      > [Every 12 hours] Pants.
  .stopmessage - clears recurring message
 
 .rolecount [role] - counts the number of members with a certain role (case sensitive)
-    - example: .rolecount Doordash
+   - example: .rolecount Doordash
      > Number of members with role "Doordash": 180
 
     
