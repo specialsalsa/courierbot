@@ -7,6 +7,7 @@ const roleClaim = require('./role-claim');
 const egg = require('./commands/egg');
 const database = require('./database');
 const { result } = require('lodash');
+const { rawListeners } = require('process');
 
 
 
@@ -64,20 +65,23 @@ client.on('message', message => {
 		// determining highest role rank out of five roles listed above
 		let filteredRoles = [];
 		let highestRoleRank = 5;
-		for (role in roles) {
-		filteredRoles = message.member.roles.cache.filter(r => r.name == role);
-		}
+		message.member.roles.cache.forEach(r => {
+			if (roles.hasOwnProperty(r.name)) {
+			 filteredRoles.push(r.name);
+			}
+		});
 		filteredRoles.forEach((role) => {
-			if (roles[role].rank < highestRole) {
+			if (roles[role].rank < highestRoleRank) {
 				highestRoleRank = roles[role].rank;
 			}
 		});
+		console.log(highestRoleRank);
 		
 		let id_user_type = highestRoleRank;
 		let discordID = message.member.id;
 		let query = 'SELECT username FROM nunops_bot.user WHERE username = ?;'
 		con.query(query, message.author.username, (err, result, field) => {
-			if (result.length === 0) {
+			if ( !result || result.length === 0) {
 				let query = 'INSERT IGNORE INTO nunops_bot.user (discord_user_id, username, kicked, id_user_type) VALUES (?, ?, ?, ?);'
 				con.query(query, [discordID, username, kicked, id_user_type], (err, result) => {
 					if (err) throw err;
