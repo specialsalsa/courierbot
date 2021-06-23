@@ -10,7 +10,7 @@ CURRENT LIST OF COMMANDS:
 
 .worth [$amount] [distance] - calculates dollars per mile of an order
    - example: .worth $10 5mi
-    > This order pays $2/mi.
+     > This order pays $2/mi.
 
 .pants - displays a random image of pants
 
