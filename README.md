@@ -15,6 +15,7 @@ CURRENT LIST OF COMMANDS:
 .pants - displays a random image of pants
 
 .ddPay - links to the Doordash FAQ article on payment
+
 .ghPay - links to the GrubHub FAQ article on payment
 
 .setbirthday [2-digit month] [2-digit day] - sets your birthday in the database and gives you a happy birthday message on your birthday
@@ -24,6 +25,7 @@ CURRENT LIST OF COMMANDS:
 .recurringmessage [interval] [message] - allows staff to set a recurring message on an interval
    - example: .recurringmessage 12h Pants.
      > [Every 12 hours] Pants.
+     
  .stopmessage - clears recurring message
 
 .rolecount [role] - counts the number of members with a certain role (case sensitive)
