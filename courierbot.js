@@ -13,12 +13,14 @@ const { CONNREFUSED } = require("dns");
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
 
+// Endb is key-value storage using a sqlite database
 const endb = new Endb("sqlite://courierbot.sqlite");
 
 module.exports.endb = endb;
 
 module.exports.client = client;
 
+// reading in command folder
 const commandFiles = fs
     .readdirSync("./commands")
     .filter(file => file.endsWith(".js"));
@@ -29,166 +31,6 @@ for (const file of commandFiles) {
 }
 
 const cooldowns = new Discord.Collection();
-
-client.on("ready", () => {
-    console.log("Ready!");
-
-    // roleClaim(client)
-});
-
-// connecting to database
-const con = database.con;
-
-// con.connect(function (err) {
-//     if (err) throw err;
-//     console.log("Connected!");
-// });
-
-// object of role rankings
-const roles = {
-    Admin: { rank: 1 },
-    Mod: { rank: 2 },
-    "Shipt Mod": { rank: 2 },
-    "Instacart Mod": { rank: 2 },
-    "Lead Developer": { rank: 3 },
-    Member: { rank: 4 },
-    Unverified: { rank: 5 }
-};
-// connecting to database
-con.connect(function (err) {
-    if (err) throw err;
-    console.log("Connected!");
-});
-// adding users to database
-client.on("message", message => {
-    if (message.author.bot) return;
-    if (!databases[message.guild.id].isOn) return;
-
-    let username = message.author.username;
-    let kicked = 0;
-    let thisAvatar = "";
-    client.users.fetch(message.member.id).then(thisUser => {
-        thisAvatar = thisUser.avatarURL();
-    });
-
-    // determining highest role rank out of five roles listed above
-
-    let highestRoleRank = 5;
-
-    // refactored to use map instead of foreach
-
-    // let filteredRoles = [];
-    // message.member.roles.cache.forEach(r => {
-    //     if (roles.hasOwnProperty(r.name)) {
-    //         filteredRoles.push(r.name);
-    //     }
-    // });
-
-    let filteredRoles = message.member.roles.cache.map(r => {
-        if (roles.hasOwnProperty(r.name)) {
-            return r.name;
-        }
-    });
-
-    filteredRoles.forEach(role => {
-        if (roles[role].rank < highestRoleRank) {
-            highestRoleRank = roles[role].rank;
-        }
-    });
-    // console.log(highestRoleRank);
-
-    let id_user_type = highestRoleRank;
-    let discordID = message.member.id;
-    let query =
-        "SELECT discord_user_id FROM nunops_bot.user WHERE discord_user_id = ?;";
-    con.query(query, discordID, (err, result, field) => {
-        if (err) console.log(err);
-        if (!result) {
-            let query =
-                "INSERT INTO nunops_bot.user (discord_user_id, username, kicked, id_user_type, avatar_url) VALUES (?, ?, ?, ?, ?);";
-            con.query(
-                query,
-                [discordID, username, kicked, id_user_type, thisAvatar],
-                (err, result) => {
-                    if (err) console.log(err);
-                }
-            );
-            console.log(`Successfully added new user entry: ${username}`);
-        }
-    });
-});
-
-// updating user entries in database with avatar URLs
-client.on("message", message => {
-    if (message.content.includes(".addAvatars")) {
-        let query = "SELECT discord_user_id FROM nunops_bot.user";
-        con.query(query, (err, result) => {
-            if (err) console.log(err);
-            result.forEach(item => {
-                // prettier-ignore
-                if (!client.users.cache.some(user => user.id === item.discord_user_id)) return;
-                client.users.fetch(item.discord_user_id).then(thisUser => {
-                    let thisAvatar = thisUser.avatarURL();
-                    let query =
-                        "UPDATE nunops_bot.user SET avatar_url = ? WHERE discord_user_id = ?;";
-                    con.query(
-                        query,
-                        [thisAvatar, thisUser.id],
-                        (err, result) => {
-                            if (err) console.log(err);
-                        }
-                    );
-                });
-            });
-            console.log("Successfully added avatar URLs to database.");
-        });
-    }
-});
-
-// setting and deleting on-duty staff message for On Duty and Support channels
-client.on("guildMemberUpdate", (oldMember, newMember) => {
-    let onDutyChannel = client.channels.cache.get("789950280787034122");
-    let supportChannel = client.channels.cache.get("820147201660551228");
-    if (oldMember.roles.cache.size < newMember.roles.cache.size) {
-        if (newMember.roles.cache.some(r => r.name == "On Duty Staff")) {
-            onDutyChannel.send(
-                `On Duty Staff: **${newMember.user.username}** is now on duty.`
-            );
-            supportChannel.send(
-                `On Duty Staff: **${newMember.user.username}** is now on duty.`
-            );
-        }
-    } else if (oldMember.roles.cache.size > newMember.roles.cache.size) {
-        if (oldMember.roles.cache.some(r => r.name == "On Duty Staff")) {
-            let channelArray = [onDutyChannel, supportChannel];
-
-            channelArray.forEach(chan => {
-                chan.messages.fetch({ limit: 10 }).then(msgs => {
-                    msgs.forEach(key => {
-                        if (key.content.includes(newMember.user.username)) {
-                            chan.messages.delete(key.id);
-                        }
-                    });
-                });
-            });
-        }
-    }
-});
-
-client.on("userUpdate", (oldUser, newUser) => {
-    if (oldUser.avatar !== newUser.avatar) {
-        let newAvatarURL = newUser.avatarURL();
-        let discordID = newUser.id;
-        let query =
-            "UPDATE nunops_bot.user SET avatar_url = ? WHERE discord_user_id = ?;";
-        con.query(query, [newAvatarURL, discordID], (error, result) => {
-            if (error) console.log(error);
-        });
-        console.log(
-            `Avatar change detected. Updated database entry with new avatar URL for ${newUser.username}.`
-        );
-    }
-});
 
 client.on("message", message => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
@@ -260,6 +102,166 @@ client.on("message", message => {
     }
 });
 
+client.on("ready", () => {
+    console.log("Ready!");
+});
+
+// object of role rankings
+const roles = {
+    Admin: { rank: 1 },
+    Mod: { rank: 2 },
+    "Shipt Mod": { rank: 2 },
+    "Instacart Mod": { rank: 2 },
+    "Lead Developer": { rank: 3 },
+    Member: { rank: 4 },
+    Unverified: { rank: 5 }
+};
+
+// connecting to database
+const con = database.con;
+con.getConnection(function (err) {
+    if (err) throw err;
+    console.log("Connected!");
+});
+
+// adding users to database
+client.on("message", message => {
+    if (message.author.bot) return;
+    if (!databases[message.guild.id].isOn) return;
+
+    let username = message.author.username;
+    let kicked = 0;
+    let thisAvatar = "";
+    client.users.fetch(message.member.id).then(thisUser => {
+        thisAvatar = thisUser.avatarURL();
+    });
+
+    // determining highest role rank out of five roles listed above
+
+    let highestRoleRank = 5;
+
+    // let filteredRoles = [];
+    // message.member.roles.cache.forEach(r => {
+    //     if (roles.hasOwnProperty(r.name)) {
+    //         filteredRoles.push(r.name);
+    //     }
+    // });
+
+    // let filteredRoles = message.member.roles.cache
+    //     .map(r => {
+    //         if (roles.hasOwnProperty(r.name)) {
+    //             return r.name;
+    //         }
+    //     })
+    //     .filter(r => r != undefined);
+
+    // refactored to use reduce instead of foreach
+    let filteredRoles = message.member.roles.cache.reduce((result, role) => {
+        if (roles.hasOwnProperty(role.name)) result.push(role.name);
+        return res;
+    }, []);
+
+    filteredRoles.forEach(role => {
+        if (roles[role].rank < highestRoleRank) {
+            highestRoleRank = roles[role].rank;
+        }
+    });
+
+    let id_user_type = highestRoleRank;
+    let discordID = message.member.id;
+    let query =
+        "SELECT discord_user_id FROM nunops_bot.user WHERE discord_user_id = ?;";
+    con.query(query, discordID, (err, result, field) => {
+        if (err) console.log(err);
+        if (!result) {
+            let query =
+                "INSERT INTO nunops_bot.user (discord_user_id, username, kicked, id_user_type, avatar_url) VALUES (?, ?, ?, ?, ?);";
+            con.query(
+                query,
+                [discordID, username, kicked, id_user_type, thisAvatar],
+                (err, result) => {
+                    if (err) console.log(err);
+                }
+            );
+            console.log(`Successfully added new user entry: ${username}`);
+        }
+    });
+});
+
+// updating user entries in database with avatar URLs
+client.on("message", message => {
+    if (message.content.includes(".addAvatars")) {
+        let query = "SELECT discord_user_id FROM nunops_bot.user";
+        con.query(query, (err, result) => {
+            if (err) console.log(err);
+            result.forEach(item => {
+                // prettier-ignore
+                // checking to see if user still exists on discord
+                if (!client.users.cache.some(user => user.id === item.discord_user_id)) return;
+                client.users.fetch(item.discord_user_id).then(thisUser => {
+                    let thisAvatar = thisUser.avatarURL();
+                    let query =
+                        "UPDATE nunops_bot.user SET avatar_url = ? WHERE discord_user_id = ?;";
+                    con.query(
+                        query,
+                        [thisAvatar, thisUser.id],
+                        (err, result) => {
+                            if (err) console.log(err);
+                        }
+                    );
+                });
+            });
+            console.log("Successfully added avatar URLs to database.");
+        });
+    }
+});
+
+// setting and deleting on-duty staff message for On Duty and Support channels
+client.on("guildMemberUpdate", (oldMember, newMember) => {
+    let onDutyChannel = client.channels.cache.get("789950280787034122");
+    let supportChannel = client.channels.cache.get("820147201660551228");
+    if (oldMember.roles.cache.size < newMember.roles.cache.size) {
+        if (newMember.roles.cache.some(r => r.name == "On Duty Staff")) {
+            onDutyChannel.send(
+                `On Duty Staff: **${newMember.user.username}** is now on duty.`
+            );
+            supportChannel.send(
+                `On Duty Staff: **${newMember.user.username}** is now on duty.`
+            );
+        }
+    } else if (oldMember.roles.cache.size > newMember.roles.cache.size) {
+        if (oldMember.roles.cache.some(r => r.name == "On Duty Staff")) {
+            let channelArray = [onDutyChannel, supportChannel];
+
+            channelArray.forEach(chan => {
+                chan.messages.fetch({ limit: 10 }).then(msgs => {
+                    msgs.forEach(key => {
+                        if (key.content.includes(newMember.user.username)) {
+                            chan.messages.delete(key.id);
+                        }
+                    });
+                });
+            });
+        }
+    }
+});
+
+// detecting avatar changes and updating database
+client.on("userUpdate", (oldUser, newUser) => {
+    if (oldUser.avatar !== newUser.avatar) {
+        let newAvatarURL = newUser.avatarURL();
+        let discordID = newUser.id;
+        let query =
+            "UPDATE nunops_bot.user SET avatar_url = ? WHERE discord_user_id = ?;";
+        con.query(query, [newAvatarURL, discordID], (error, result) => {
+            if (error) console.log(error);
+        });
+        console.log(
+            `Avatar change detected. Updated database entry with new avatar URL for ${newUser.username}.`
+        );
+    }
+});
+
 client.on("ready", async () => {
     await client.user.setPresence({
         activity: { name: `I'm helping!`, type: "PLAYING" },
@@ -287,6 +289,7 @@ client.on("message", message => {
         if (message.content.toLowerCase().includes(word)) {
             if (message.author.bot) return;
             if (message.content[0] === ".") return;
+            if (message.content.replace(/[^:]/g, "").length % 2 == 0) return;
             message.react(triggerWords[word]);
         }
     }
