@@ -235,9 +235,9 @@ client.on("guildMemberUpdate", (oldMember, newMember) => {
 
             channelArray.forEach(chan => {
                 chan.messages.fetch({ limit: 10 }).then(msgs => {
-                    msgs.forEach(key => {
-                        if (key.content.includes(newMember.user.username)) {
-                            chan.messages.delete(key.id);
+                    msgs.forEach(msg => {
+                        if (msg.content.includes(newMember.user.username)) {
+                            chan.messages.delete(msg.id);
                         }
                     });
                 });
@@ -262,6 +262,7 @@ client.on("userUpdate", (oldUser, newUser) => {
     }
 });
 
+// setting bot status
 client.on("ready", async () => {
     await client.user.setPresence({
         activity: { name: `I'm helping!`, type: "PLAYING" },
@@ -269,6 +270,7 @@ client.on("ready", async () => {
     });
 });
 
+// reactions to trigger words
 client.on("message", message => {
     if (message.author.bot) return;
     if (!databases[message.guild.id].isOn) return;
