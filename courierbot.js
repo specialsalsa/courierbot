@@ -158,7 +158,7 @@ client.on("message", message => {
     // refactored to use reduce instead of foreach
     let filteredRoles = message.member.roles.cache.reduce((result, role) => {
         if (roles.hasOwnProperty(role.name)) result.push(role.name);
-        return res;
+        return result;
     }, []);
 
     filteredRoles.forEach(role => {
@@ -289,7 +289,9 @@ client.on("message", message => {
         if (message.content.toLowerCase().includes(word)) {
             if (message.author.bot) return;
             if (message.content[0] === ".") return;
-            if (message.content.replace(/[^:]/g, "").length % 2 == 0) return;
+            //prettier-ignore
+            let messageColonLength = message.content.replace(/[^:]/g, "").length;
+            if (!messageColonLength % 2 == 0) return;
             message.react(triggerWords[word]);
         }
     }
