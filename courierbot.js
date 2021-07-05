@@ -173,7 +173,7 @@ client.on("message", message => {
         "SELECT discord_user_id FROM nunops_bot.user WHERE discord_user_id = ?;";
     con.query(query, discordID, (err, result, field) => {
         if (err) console.log(err);
-        if (!result) {
+        if (result.length === 0) {
             let query =
                 "INSERT INTO nunops_bot.user (discord_user_id, username, kicked, id_user_type, avatar_url) VALUES (?, ?, ?, ?, ?);";
             con.query(
