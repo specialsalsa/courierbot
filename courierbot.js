@@ -1,14 +1,27 @@
 const fs = require("fs");
 const Discord = require("discord.js");
-const { prefix, token } = require("./config.json");
+const { token } = require("./config.json");
 const users = require("./users.json");
 const Endb = require("endb");
 const roleClaim = require("./role-claim");
 const egg = require("./commands/egg");
-const database = require("./database");
+const { con } = require("./database");
 const { result } = require("lodash");
 const { rawListeners } = require("process");
 const { CONNREFUSED } = require("dns");
+const WebSocket = require("ws");
+
+const wss = new WebSocket.Server({
+    port: 3000
+});
+
+// connecting to database
+con.getConnection(function (err) {
+    if (err) throw err;
+    console.log("Connected!");
+});
+
+let prefix = ".";
 
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
@@ -32,7 +45,15 @@ for (const file of commandFiles) {
 
 const cooldowns = new Discord.Collection();
 
-client.on("message", message => {
+client.on("message", async message => {
+    con.query(
+        `SELECT command_prefix FROM nunops_bot.server_config WHERE server_id = 1;`,
+        (err, result) => {
+            if (err) console.log(err);
+            prefix = result[0].command_prefix;
+        }
+    );
+
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
@@ -102,8 +123,56 @@ client.on("message", message => {
     }
 });
 
-client.on("ready", () => {
+const sendMemberCounts = () => {
+    wss.on("connection", function connection(ws) {
+        console.log("opened connection");
+
+        const sendCounts = () => {
+            let memberCounts = JSON.stringify({
+                memberCount:
+                    client.guilds.cache.get("531182018571141132").memberCount,
+                botCount: client.guilds.cache
+                    .get("531182018571141132")
+                    .members.cache.filter(member =>
+                        member.roles.cache.some(r => r.name === "bots")
+                    ).size,
+                onlineCount: client.guilds.cache
+                    .get("531182018571141132")
+                    .members.cache.filter(
+                        m =>
+                            m.presence.status === "online" ||
+                            m.presence.status === "idle" ||
+                            m.presence.status === "dnd"
+                    ).size
+            });
+            ws.send(memberCounts);
+        };
+
+        sendCounts();
+
+        let listenerObj = {
+            guildMemberAdd: sendCounts,
+            guildMemberRemove: sendCounts,
+            presenceUpdate: sendCounts
+        };
+
+        for (listener in listenerObj) {
+            client.on(listener, listenerObj[listener]);
+        }
+
+        ws.on("message", function incoming(message) {
+            if (message === "Remove listeners plz") {
+                for (listener in listenerObj) {
+                    client.removeListener(listener, listenerObj[listener]);
+                }
+            }
+        });
+    });
+};
+
+client.once("ready", () => {
     console.log("Ready!");
+    sendMemberCounts();
 });
 
 // object of role rankings
@@ -117,11 +186,30 @@ const roles = {
     Unverified: { rank: 5 }
 };
 
-// connecting to database
-const con = database.con;
-con.getConnection(function (err) {
-    if (err) throw err;
-    console.log("Connected!");
+// set prefix command for staff
+client.on("message", message => {
+    if (message.content.includes("setprefix")) {
+        if (
+            !message.member.roles.cache.some(
+                r =>
+                    r.name === "Lead Developer" ||
+                    r.name === "Mod" ||
+                    r.name === "Admin"
+            )
+        )
+            return;
+        let prefix2 = message.content.split(" ")[1];
+
+        con.query(
+            "UPDATE nunops_bot.server_config SET command_prefix = ? WHERE server_id = 1;",
+            prefix2,
+            err => {
+                if (err) console.log(err);
+            }
+        );
+
+        message.channel.send(`Prefix set to ${prefix2}`);
+    }
 });
 
 // adding users to database
@@ -171,7 +259,7 @@ client.on("message", message => {
     let discordID = message.member.id;
     let query =
         "SELECT discord_user_id FROM nunops_bot.user WHERE discord_user_id = ?;";
-    con.query(query, discordID, (err, result, field) => {
+    con.query(query, discordID, (err, result) => {
         if (err) console.log(err);
         if (result.length === 0) {
             let query =
@@ -179,7 +267,7 @@ client.on("message", message => {
             con.query(
                 query,
                 [discordID, username, kicked, id_user_type, thisAvatar],
-                (err, result) => {
+                err => {
                     if (err) console.log(err);
                 }
             );

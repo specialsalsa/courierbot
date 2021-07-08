@@ -4,7 +4,8 @@
   "description": "discord bot",
   "main": "index.js",
   "scripts": {
-    "test": "bot"
+    "test": "bot",
+    "start": "nodemon courierbot.js"
   },
   "repository": {
     "type": "git",
@@ -28,8 +29,10 @@
     "mssql": "^6.3.0",
     "mysql": "^2.18.1",
     "sequelize": "^6.3.5",
+    "socket.io-client": "^4.1.2",
     "sql": "^0.78.0",
     "sqlite": "^4.0.18",
-    "sqlite3": "^5.0.0"
+    "sqlite3": "^5.0.0",
+    "ws": "^7.5.2"
   }
 }
