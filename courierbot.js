@@ -1,14 +1,10 @@
 const fs = require("fs");
 const Discord = require("discord.js");
-const { token } = require("./config.json");
-const users = require("./users.json");
+// const { token } = require("./config.json");
 const Endb = require("endb");
 const roleClaim = require("./role-claim");
 const egg = require("./commands/egg");
 const { con } = require("./database");
-const { result } = require("lodash");
-const { rawListeners } = require("process");
-const { CONNREFUSED } = require("dns");
 const WebSocket = require("ws");
 
 const wss = new WebSocket.Server({
@@ -657,4 +653,4 @@ client.on("message", async message => {
 // 		}
 // 	});
 
-client.login(token);
+client.login(process.env.TOKEN);
