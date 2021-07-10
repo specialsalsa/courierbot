@@ -6,10 +6,13 @@ const roleClaim = require("./role-claim");
 const egg = require("./commands/egg");
 const { con } = require("./database");
 const WebSocket = require("ws");
+require("dotenv").config();
+const { httpServer } = require("./server/server");
 
-const wss = new WebSocket.Server({
-    port: 3000
-});
+const { sendMemberCounts } = require("./server/configController");
+
+const token = process.env.TOKEN;
+httpServer.listen(4000);
 
 // connecting to database
 con.getConnection(function (err) {
@@ -118,53 +121,6 @@ client.on("message", async message => {
         message.reply("there was an error trying to execute that command!");
     }
 });
-
-const sendMemberCounts = () => {
-    wss.on("connection", function connection(ws) {
-        console.log("opened connection");
-
-        const sendCounts = () => {
-            let memberCounts = JSON.stringify({
-                memberCount:
-                    client.guilds.cache.get("531182018571141132").memberCount,
-                botCount: client.guilds.cache
-                    .get("531182018571141132")
-                    .members.cache.filter(member =>
-                        member.roles.cache.some(r => r.name === "bots")
-                    ).size,
-                onlineCount: client.guilds.cache
-                    .get("531182018571141132")
-                    .members.cache.filter(
-                        m =>
-                            m.presence.status === "online" ||
-                            m.presence.status === "idle" ||
-                            m.presence.status === "dnd"
-                    ).size
-            });
-            ws.send(memberCounts);
-        };
-
-        sendCounts();
-
-        let listenerObj = {
-            guildMemberAdd: sendCounts,
-            guildMemberRemove: sendCounts,
-            presenceUpdate: sendCounts
-        };
-
-        for (listener in listenerObj) {
-            client.on(listener, listenerObj[listener]);
-        }
-
-        ws.on("message", function incoming(message) {
-            if (message === "Remove listeners plz") {
-                for (listener in listenerObj) {
-                    client.removeListener(listener, listenerObj[listener]);
-                }
-            }
-        });
-    });
-};
 
 client.once("ready", () => {
     console.log("Ready!");
@@ -653,4 +609,4 @@ client.on("message", async message => {
 // 		}
 // 	});
 
-client.login(process.env.TOKEN);
+client.login(token);
