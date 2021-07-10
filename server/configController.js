@@ -1,4 +1,4 @@
-const { client } = require("discord.js");
+const cb = require("../courierbot");
 const WebSocket = require("ws");
 const wss = new WebSocket.Server({
     port: 3033
@@ -11,13 +11,14 @@ const sendMemberCounts = () => {
         const sendCounts = () => {
             let memberCounts = JSON.stringify({
                 memberCount:
-                    client.guilds.cache.get("531182018571141132").memberCount,
-                botCount: client.guilds.cache
+                    cb.client.guilds.cache.get("531182018571141132")
+                        .memberCount,
+                botCount: cb.client.guilds.cache
                     .get("531182018571141132")
                     .members.cache.filter(member =>
                         member.roles.cache.some(r => r.name === "bots")
                     ).size,
-                onlineCount: client.guilds.cache
+                onlineCount: cb.client.guilds.cache
                     .get("531182018571141132")
                     .members.cache.filter(
                         m =>
@@ -38,13 +39,13 @@ const sendMemberCounts = () => {
         };
 
         for (listener in listenerObj) {
-            client.on(listener, listenerObj[listener]);
+            cb.client.on(listener, listenerObj[listener]);
         }
 
         ws.on("message", function incoming(message) {
             if (message === "Remove listeners plz") {
                 for (listener in listenerObj) {
-                    client.removeListener(listener, listenerObj[listener]);
+                    cb.client.removeListener(listener, listenerObj[listener]);
                 }
             }
         });

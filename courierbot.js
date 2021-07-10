@@ -1,18 +1,13 @@
 const fs = require("fs");
 const Discord = require("discord.js");
-// const { token } = require("./config.json");
 const Endb = require("endb");
 const roleClaim = require("./role-claim");
 const egg = require("./commands/egg");
 const { con } = require("./database");
-const WebSocket = require("ws");
+const configController = require("./server/configController");
 require("dotenv").config();
-const { httpServer } = require("./server/server");
-
-const { sendMemberCounts } = require("./server/configController");
 
 const token = process.env.TOKEN;
-httpServer.listen(4000);
 
 // connecting to database
 con.getConnection(function (err) {
@@ -124,7 +119,7 @@ client.on("message", async message => {
 
 client.once("ready", () => {
     console.log("Ready!");
-    sendMemberCounts();
+    configController.sendMemberCounts();
 });
 
 // object of role rankings
