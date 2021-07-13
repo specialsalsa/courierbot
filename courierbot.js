@@ -14,18 +14,6 @@ con.getConnection(function (err) {
     if (err) throw err;
     console.log("Connected!");
 });
-<<<<<<< HEAD
-=======
-
-//initializing express server
-const PORT = 3000;
-const INDEX = "/index.html";
-
-const server = express()
-    .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
-    .listen(PORT, () => console.log(`Listening on ${PORT}`));
-
->>>>>>> 2faa327e4e84ed43ba7264a624fa57976ddcb4d7
 // initial prefix setting
 let prefix = ".";
 
