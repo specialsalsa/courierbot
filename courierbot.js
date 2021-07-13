@@ -20,6 +20,8 @@ let prefix = ".";
 
 // instantiating discord client and commands collection
 const client = new Discord.Client();
+
+module.exports.client = client;
 client.commands = new Discord.Collection();
 
 // Endb is key-value storage using a sqlite database
@@ -588,10 +590,12 @@ client.on("message", async message => {
 // 		}
 // 	});
 
+client.login(token);
+
 // consolidated module.exports into one object
 module.exports = {
     endb,
-    client,
+    // client: client,
     cbeasterSecret,
     cbeaster,
     zenbogsecret,
@@ -602,5 +606,3 @@ module.exports = {
     tacos,
     messageCounts
 };
-
-client.login(token);
