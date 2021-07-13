@@ -1,6 +1,5 @@
 node_modules
 token.js
 config.json
-database.js
 .env
 *.sqlite
