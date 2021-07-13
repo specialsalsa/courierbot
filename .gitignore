@@ -3,3 +3,4 @@ token.js
 config.json
 database.js
 .env
+*.sqlite
