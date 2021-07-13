@@ -117,6 +117,7 @@ client.on("message", async message => {
     }
 });
 
+// setting up listeners to send WebSocket server data
 client.once("ready", () => {
     console.log("Ready!");
     configController.sendMemberCounts();
@@ -221,34 +222,6 @@ client.on("message", message => {
             console.log(`Successfully added new user entry: ${username}`);
         }
     });
-});
-
-// updating user entries in database with avatar URLs
-client.on("message", message => {
-    if (message.content.includes(".addAvatars")) {
-        let query = "SELECT discord_user_id FROM nunops_bot.user";
-        con.query(query, (err, result) => {
-            if (err) console.log(err);
-            result.forEach(item => {
-                // prettier-ignore
-                // checking to see if user still exists on discord
-                if (!client.users.cache.some(user => user.id === item.discord_user_id)) return;
-                client.users.fetch(item.discord_user_id).then(thisUser => {
-                    let thisAvatar = thisUser.avatarURL();
-                    let query =
-                        "UPDATE nunops_bot.user SET avatar_url = ? WHERE discord_user_id = ?;";
-                    con.query(
-                        query,
-                        [thisAvatar, thisUser.id],
-                        (err, result) => {
-                            if (err) console.log(err);
-                        }
-                    );
-                });
-            });
-            console.log("Successfully added avatar URLs to database.");
-        });
-    }
 });
 
 // setting and deleting on-duty staff message for On Duty and Support channels
@@ -444,6 +417,7 @@ client.on("ready", async () => {
 
 const birthdays = new Endb("sqlite://birthdays.sqlite");
 
+//happy birthday message
 client.on("message", async message => {
     if (message.author.bot) return;
     let thisDateUser = await birthdays.get(message.member.id);
@@ -463,6 +437,7 @@ client.on("message", async message => {
     }
 });
 
+// Cinco De Mayo
 const tacoIngredients = {
     shell: "shell",
     lettuce: "lettuce",
@@ -473,8 +448,6 @@ const tacoIngredients = {
     guacamole: "guacamole",
     beans: "beans"
 };
-
-// Cinco De Mayo
 
 const tacos = new Endb("sqlite://tacos.sqlite");
 
