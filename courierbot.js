@@ -15,17 +15,15 @@ con.getConnection(function (err) {
     console.log("Connected!");
 });
 
+// initial prefix setting
 let prefix = ".";
 
+// instantiating discord client and commands collection
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
 
 // Endb is key-value storage using a sqlite database
 const endb = new Endb("sqlite://courierbot.sqlite");
-
-module.exports.endb = endb;
-
-module.exports.client = client;
 
 // reading in command folder
 const commandFiles = fs
@@ -39,6 +37,7 @@ for (const file of commandFiles) {
 
 const cooldowns = new Discord.Collection();
 
+// command handler
 client.on("message", async message => {
     con.query(
         `SELECT command_prefix FROM nunops_bot.server_config WHERE server_id = 1;`,
@@ -352,17 +351,9 @@ const cbeaster = new Endb("sqlite://cbeaster.sqlite");
 
 const cbeasterSecret = new Endb("sqlite://cbeastersecret.sqlite");
 
-module.exports.cbeasterSecret = cbeasterSecret;
-
-module.exports.cbeaster = cbeaster;
-
 const zenbog = new Endb("sqlite://zenbog.sqlite");
 
 const zenbogsecret = new Endb("sqlite://zenbogsecret.sqlite");
-
-module.exports.zenbogsecret = zenbogsecret;
-
-module.exports.zenbog = zenbog;
 
 const databases = {
     "531182018571141132": {
@@ -376,8 +367,6 @@ const databases = {
         isOn: false
     }
 };
-
-module.exports.databases = databases;
 
 // Easter egg hunt
 
@@ -453,7 +442,6 @@ client.on("ready", async () => {
 });
 
 const birthdays = new Endb("sqlite://birthdays.sqlite");
-module.exports.birthdays = birthdays;
 
 client.on("message", async message => {
     if (message.author.bot) return;
@@ -485,15 +473,11 @@ const tacoIngredients = {
     beans: "beans"
 };
 
-module.exports.tacoIngredients = tacoIngredients;
-
 // Cinco De Mayo
 
 const tacos = new Endb("sqlite://tacos.sqlite");
-module.exports.tacos = tacos;
 
 const messageCounts = new Endb("sqlite://messagecounts.sqlite");
-module.exports.messageCounts = messageCounts;
 
 // function to find taco ingredients for 5/5 event
 const findIngredient = async message => {
@@ -603,5 +587,20 @@ client.on("message", async message => {
 // 			}
 // 		}
 // 	});
+
+// consolidated module.exports into one object
+module.exports = {
+    endb,
+    client,
+    cbeasterSecret,
+    cbeaster,
+    zenbogsecret,
+    zenbog,
+    databases,
+    birthdays,
+    tacoIngredients,
+    tacos,
+    messageCounts
+};
 
 client.login(token);
