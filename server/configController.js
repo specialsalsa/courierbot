@@ -1,8 +1,14 @@
 const cb = require("../courierbot");
 const WebSocket = require("ws");
-const wss = new WebSocket.Server({
-    port: 3033
-});
+const PORT = process.env.PORT || 3033;
+const INDEX = "/index.html";
+const express = require("express");
+
+const server = express()
+    .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
+    .listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+const wss = new WebSocket.Server({ server });
 
 const sendMemberCounts = () => {
     wss.on("connection", function connection(ws) {
