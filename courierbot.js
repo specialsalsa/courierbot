@@ -5,6 +5,7 @@ const roleClaim = require("./role-claim");
 const egg = require("./commands/egg");
 const { con } = require("./database");
 const configController = require("./server/configController");
+let features = require("./features").features;
 require("dotenv").config();
 
 const token = process.env.TOKEN;
@@ -161,68 +162,69 @@ client.on("message", message => {
 });
 
 // adding users to database
-// client.on("message", message => {
-//     if (message.author.bot) return;
-//     if (!databases[message.guild.id].isOn) return;
+client.on("message", message => {
+    if (message.author.bot) return;
+    if (!databases[message.guild.id].isOn) return;
+    if (!features.addUsersToDatabase.enabled) return;
 
-//     let username = message.author.username;
-//     let kicked = 0;
-//     let thisAvatar = "";
-//     client.users.fetch(message.member.id).then(thisUser => {
-//         thisAvatar = thisUser.avatarURL();
-//     });
+    let username = message.author.username;
+    let kicked = 0;
+    let thisAvatar = "";
+    client.users.fetch(message.member.id).then(thisUser => {
+        thisAvatar = thisUser.avatarURL();
+    });
 
-//     // determining highest role rank out of five roles listed above
+    // determining highest role rank out of five roles listed above
 
-//     let highestRoleRank = 5;
+    let highestRoleRank = 5;
 
-//     // let filteredRoles = [];
-//     // message.member.roles.cache.forEach(r => {
-//     //     if (roles.hasOwnProperty(r.name)) {
-//     //         filteredRoles.push(r.name);
-//     //     }
-//     // });
+    // let filteredRoles = [];
+    // message.member.roles.cache.forEach(r => {
+    //     if (roles.hasOwnProperty(r.name)) {
+    //         filteredRoles.push(r.name);
+    //     }
+    // });
 
-//     // let filteredRoles = message.member.roles.cache
-//     //     .map(r => {
-//     //         if (roles.hasOwnProperty(r.name)) {
-//     //             return r.name;
-//     //         }
-//     //     })
-//     //     .filter(r => r != undefined);
+    // let filteredRoles = message.member.roles.cache
+    //     .map(r => {
+    //         if (roles.hasOwnProperty(r.name)) {
+    //             return r.name;
+    //         }
+    //     })
+    //     .filter(r => r != undefined);
 
-//     // refactored to use reduce instead of foreach
-//     let filteredRoles = message.member.roles.cache.reduce((result, role) => {
-//         if (roles.hasOwnProperty(role.name)) result.push(role.name);
-//         return result;
-//     }, []);
+    // refactored to use reduce instead of foreach
+    let filteredRoles = message.member.roles.cache.reduce((result, role) => {
+        if (roles.hasOwnProperty(role.name)) result.push(role.name);
+        return result;
+    }, []);
 
-//     filteredRoles.forEach(role => {
-//         if (roles[role].rank < highestRoleRank) {
-//             highestRoleRank = roles[role].rank;
-//         }
-//     });
+    filteredRoles.forEach(role => {
+        if (roles[role].rank < highestRoleRank) {
+            highestRoleRank = roles[role].rank;
+        }
+    });
 
-//     let id_user_type = highestRoleRank;
-//     let discordID = message.member.id;
-//     let query =
-//         "SELECT discord_user_id FROM nunops_bot.user WHERE discord_user_id = ?;";
-//     con.query(query, discordID, (err, result) => {
-//         if (err) console.log(err);
-//         if (result === undefined || result.length == 0) {
-//             let query =
-//                 "INSERT INTO nunops_bot.user (discord_user_id, username, kicked, id_user_type, avatar_url) VALUES (?, ?, ?, ?, ?);";
-//             con.query(
-//                 query,
-//                 [discordID, username, kicked, id_user_type, thisAvatar],
-//                 err => {
-//                     if (err) console.log(err);
-//                 }
-//             );
-//             console.log(`Successfully added new user entry: ${username}`);
-//         }
-//     });
-// });
+    let id_user_type = highestRoleRank;
+    let discordID = message.member.id;
+    let query =
+        "SELECT discord_user_id FROM nunops_bot.user WHERE discord_user_id = ?;";
+    con.query(query, discordID, (err, result) => {
+        if (err) console.log(err);
+        if (result === undefined || result.length == 0) {
+            let query =
+                "INSERT INTO nunops_bot.user (discord_user_id, username, kicked, id_user_type, avatar_url) VALUES (?, ?, ?, ?, ?);";
+            con.query(
+                query,
+                [discordID, username, kicked, id_user_type, thisAvatar],
+                err => {
+                    if (err) console.log(err);
+                }
+            );
+            console.log(`Successfully added new user entry: ${username}`);
+        }
+    });
+});
 
 // setting and deleting on-duty staff message for On Duty and Support channels
 client.on("guildMemberUpdate", (oldMember, newMember) => {
