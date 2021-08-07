@@ -1,6 +1,5 @@
 {
-    "pantsImages": 
-    [
+    "pantsImages": [
         "https://assets.adidas.com/images/h_840,f_auto,q_auto:sensitive,fl_lossy/238dd365416c480cb849aaa801715080_9366/Game_and_Go_Pants_Black_FI3867_21_model.jpg",
         "https://kmd-assets.imgix.net/catalog/product/a/0/a0845_710_federatepantsmenregular_a.jpg",
         "https://www.gap.com/webcontent/0017/409/331/cn17409331.jpg",
@@ -21,9 +20,7 @@
         "https://www.dickies.com/dw/image/v2/AAYI_PRD/on/demandware.static/-/Sites-master-catalog-dickies/default/dwe2e73108/images/main/874_AF_FR.jpg?sw=583&sh=746&sm=fit",
         "https://content.backcountry.com/images/items/900/TNF/TNF05HB/PEAPUR.jpg",
         "https://cdn.shopify.com/s/files/1/0002/4680/8603/products/Navy_0002_Layer_1_1600x1600.jpg?v=1569135199",
-        "http://cdn.shopify.com/s/files/1/0888/4876/products/Truewerk-T1-WerrkPant-DeepGrey-T1WerkPant2021-040-FRONT.jpg?v=1614726383",
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOVbO8CpeK3TwInjtHkwTarluX1B7OThq3ig&usqp=CAU",
         "https://www.insidehook.com/wp-content/uploads/2020/07/dickies_paint_pants.jpg?fit=1200%2C800"
-
     ]
 }

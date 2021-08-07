@@ -543,6 +543,50 @@ client.on("message", async message => {
     }
 });
 
+// registering slash commands
+
+client.api
+    .applications("781436885020049458")
+    .guilds("531182018571141132")
+    .commands.post({
+        data: {
+            name: "worth",
+            description: "calculates $/mi. example: .worth 5mi $15",
+            options: [
+                {
+                    name: "payout",
+                    description: "payout of order",
+                    type: 3,
+                    required: true
+                },
+                {
+                    name: "mileage",
+                    description: "mileage of order",
+                    type: 3,
+                    required: true
+                }
+            ]
+        }
+    });
+
+client.ws.on("INTERACTION_CREATE", async interaction => {
+    function dollarsPerMile(payout, mileage) {
+        payout = payout.replace(/[&\/\\#,+()$~%'":*?<>{}]/g, "");
+        mileage = mileage.replace(/[&\/\\#,+()$~%'":*?mi<>{}]/g, "");
+        return Math.round((payout / mileage) * 100) / 100;
+    }
+
+    client.api.interactions(interaction.id, interaction.token).callback.post({
+        data: {
+            type: 4,
+            data: {
+                // prettier-ignore
+                content: `This order pays $${dollarsPerMile(interaction.data.options[0].value, interaction.data.options[1].value)} / mi.`
+            }
+        }
+    });
+});
+
 // cleared easter egg stash for staff for equal participation in egg hunt
 
 // client.on('message', async message => {
