@@ -25,6 +25,11 @@ module.exports = {
       setTimeout(() => {
         ranInLast30Minutes = false;
       }, 1800000);
+
+      // resets channel name after 3 days since command last ran
+      setTimeout(() => {
+        message.channel.setName(`☕-choose-a-topic`);
+      }, 1000 * 60 * 60 * 72);
     } else {
       message.channel.send(
         'You can only use this command in the choose-a-topic channel (marked with the ☕ emoji).'
