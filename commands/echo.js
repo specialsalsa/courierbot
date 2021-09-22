@@ -8,7 +8,11 @@ module.exports = {
       mentionedChannel = message.mentions.channels.first().id;
       echoedMessage = message.content.replace(`.echo ${args[0]} `, '');
       message.delete();
-      message.guild.channels.cache.get(mentionedChannel).send(echoedMessage);
+      if (mentionedChannel) {
+        message.guild.channels.cache.get(mentionedChannel).send(echoedMessage);
+      } else {
+        message.channel.send(echoedMessage);
+      }
     } else {
       echoedMessage = message.content.replace('.echo ', '');
       message.delete();
