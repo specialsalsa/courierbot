@@ -14,11 +14,26 @@ module.exports = {
     }
 
     if (message.channel.id === '889752147623837776') {
+      let threeDayTimerID;
+      const threeDayTimer = () => {
+        threeDayTimerID = setTimeout(() => {
+          message.channel.setName(`☕-choose-a-topic`);
+        }, 1000 * 60 * 60 * 72);
+      };
+
       let channelName = args[0];
       if (args.length > 1) {
         channelName = args.join('-');
       }
       message.channel.setName(`☕-${channelName}`);
+
+      message.channel.send(`\`\`\`
+      
+
+      CHANNEL HAS BEEN CHANGED TO: ${channelName.toUpperCase()}
+
+      \`\`\``);
+
       ranInLast30Minutes = true;
       timeCommandRan = Date.now();
 
@@ -26,10 +41,8 @@ module.exports = {
         ranInLast30Minutes = false;
       }, 1800000);
 
-      // resets channel name after 3 days since command last ran
-      setTimeout(() => {
-        message.channel.setName(`☕-choose-a-topic`);
-      }, 1000 * 60 * 60 * 72);
+      clearTimeout(threeDayTimerID);
+      threeDayTimer();
     } else {
       message.channel.send(
         'You can only use this command in the choose-a-topic channel (marked with the ☕ emoji).'

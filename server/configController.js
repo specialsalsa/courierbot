@@ -10,9 +10,29 @@ const server = express()
 
 const wss = new WebSocket.Server({ server });
 
+// let messageArray = [];
+
 const sendMemberCounts = () => {
   wss.on('connection', function connection(ws) {
     console.log('opened connection');
+
+    // cb.client.on('message', message => {
+    //   console.log('received message');
+    //   let newMessage = {
+    //     content: message.content,
+    //     member: message.member.id,
+    //     timestamp: Date.now()
+    //   };
+
+    //   messageArray.push(newMessage);
+
+    //   setInterval(() => {
+    //     let messageLastHourCount = messageArray.filter(msg => {
+    //       return (Date.now() - msg.timestamp) / 1000 / 60 <= 60;
+    //     }).length;
+    //     ws.send(JSON.stringify({ messages: messageLastHourCount }));
+    //   }, 10000);
+    // });
 
     const sendCounts = () => {
       let memberCounts = JSON.stringify({
@@ -58,5 +78,6 @@ const sendMemberCounts = () => {
 };
 
 module.exports = {
-  sendMemberCounts
+  sendMemberCounts,
+  wss
 };

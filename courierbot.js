@@ -158,6 +158,27 @@ client.on('message', message => {
   }
 });
 
+// let messageArray = [];
+
+// client.on('message', message => {
+//   let newMessage = {
+//     content: message.content,
+//     member: message.member.id,
+//     timestamp: Date.now()
+//   };
+
+//   messageArray.push(newMessage);
+// });
+
+// configController.wss.on('connection', ws => {
+// setInterval(() => {
+//   let messageLastHourCount = messageArray.filter(msg => {
+//     return (Date.now() - msg.timestamp) / 1000 / 60 <= 60;
+//   }).length;
+//   ws.send(JSON.stringify({ messages: messageLastHourCount }));
+// }, 10000);
+// });
+
 // adding users to database
 client.on('message', message => {
   if (message.author.bot) return;
