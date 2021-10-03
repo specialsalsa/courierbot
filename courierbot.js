@@ -123,6 +123,36 @@ client.once('ready', () => {
   configController.sendMemberCounts();
 });
 
+const tempbans = new Endb('sqlite://courierbot.sqlite');
+
+module.exports.tempbans = tempbans;
+
+client.on('message', async message => {
+  if (message.content.includes('!tempban')) {
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    let timeUntilUnbannedInput = args[1];
+    let userID = message.mentions.users.first().id;
+
+    let unbannedUnit =
+      timeUntilUnbannedInput[timeUntilUnbannedInput.length - 1];
+    let unbannedInteger = timeUntilUnbannedInput.replace(unbannedUnit, '');
+
+    let unbannedDate = 0;
+
+    if (unbannedUnit == 'd') {
+      unbannedDate = Date.now() + unbannedInteger * 1000 * 60 * 60 * 24;
+    } else if (unbannedUnit == 'h') {
+      unbannedDate = Date.now() + unbannedInteger * 1000 * 60 * 60;
+    }
+
+    await tempbans.set(userID, unbannedDate);
+
+    setTimeout(() => {
+      tempbans.delete(userID);
+    }, unbannedDate);
+  }
+});
+
 // object of role rankings
 const roles = {
   Admin: { rank: 1 },
@@ -661,5 +691,6 @@ module.exports = {
   birthdays,
   tacoIngredients,
   tacos,
-  messageCounts
+  messageCounts,
+  tempbans
 };

@@ -1,3 +1,5 @@
+const e = require('express');
+
 let ranInLast30Minutes = false;
 let timeCommandRan = new Date();
 module.exports = {
@@ -24,6 +26,13 @@ module.exports = {
       let channelName = args[0];
       if (args.length > 1) {
         channelName = args.join('-');
+      }
+
+      if (channelName.length > 100) {
+        message.channel.send(
+          `Channel name must be between 1 and 100 characters in length`
+        );
+        return;
       }
       message.channel.setName(`☕-${channelName}`);
 

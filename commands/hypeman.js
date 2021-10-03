@@ -13,6 +13,13 @@ module.exports = {
     }
     stringArray.push(' ');
 
+    if (stringArray.length >= 44) {
+      message.channel.send(
+        'Output is too lengthy (2000 character limit reached), try again with shorter input'
+      );
+      return;
+    }
+
     let stringArrayString = '';
 
     for (let i = 0; i < stringArray.length; i++) {
@@ -26,7 +33,7 @@ module.exports = {
 
     if (stringArrayString.length >= 4000) {
       message.channel.send(
-        'Output is too lengthy (4000 character limit reached), try again with shorter input'
+        'Output is too lengthy (2000 character limit reached), try again with shorter input'
       );
       return;
     }
