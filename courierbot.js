@@ -5,6 +5,10 @@ const roleClaim = require('./role-claim');
 const egg = require('./commands/egg');
 const { con } = require('./database');
 const configController = require('./server/configController');
+const {
+  startChannelTimer,
+  resetChannelTimer
+} = require('./commands/startChannelTimer');
 let features = require('./features').features;
 require('dotenv').config();
 
@@ -125,6 +129,10 @@ client.once('ready', () => {
 
 const tempbans = new Endb('sqlite://courierbot.sqlite');
 
+const links = new Endb('sqlite://links.sqlite');
+
+module.exports.links = links;
+
 module.exports.tempbans = tempbans;
 
 client.on('message', async message => {
@@ -150,6 +158,12 @@ client.on('message', async message => {
     setTimeout(() => {
       tempbans.delete(userID);
     }, unbannedDate);
+  }
+});
+
+client.on('message', message => {
+  if (message.channel.id == '889752147623837776') {
+    startChannelTimer(message);
   }
 });
 

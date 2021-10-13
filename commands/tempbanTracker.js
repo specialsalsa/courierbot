@@ -10,17 +10,15 @@ module.exports = {
       let listOfTempbans = '';
 
       allTempbans.forEach(tempban => {
-        let tempbanLocaleString = new Date(tempban.value);
+        let tempbanLocaleString = new Date(tempban.value).toLocaleString();
 
-        listOfTempbans += `${
-          tempban.key
-        }: ${tempbanLocaleString.toLocaleString()} \n\n`;
+        listOfTempbans += `${tempban.key}: ${tempbanLocaleString} \n\n`;
       });
 
-      message.channel.send(`\`\`\`Tempbanned users and their expiration dates:
+      message.channel.send(`Tempbanned users and their expiration dates:
 
 
-      ${listOfTempbans}\`\`\``);
+${listOfTempbans}`);
     }
   }
 };

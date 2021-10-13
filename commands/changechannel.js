@@ -1,5 +1,3 @@
-const e = require('express');
-
 let ranInLast30Minutes = false;
 let timeCommandRan = new Date();
 module.exports = {
@@ -16,13 +14,6 @@ module.exports = {
     }
 
     if (message.channel.id === '889752147623837776') {
-      let threeDayTimerID;
-      const threeDayTimer = () => {
-        threeDayTimerID = setTimeout(() => {
-          message.channel.setName(`☕-choose-a-topic`);
-        }, 1000 * 60 * 60 * 72);
-      };
-
       let channelName = args[0];
       if (args.length > 1) {
         channelName = args.join('-');
@@ -49,9 +40,6 @@ module.exports = {
       setTimeout(() => {
         ranInLast30Minutes = false;
       }, 1800000);
-
-      clearTimeout(threeDayTimerID);
-      threeDayTimer();
     } else {
       message.channel.send(
         'You can only use this command in the choose-a-topic channel (marked with the ☕ emoji).'
