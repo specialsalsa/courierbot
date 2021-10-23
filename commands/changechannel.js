@@ -14,8 +14,13 @@ module.exports = {
     }
 
     if (message.channel.id === '889752147623837776') {
-      let channelName = args[0];
-      if (args.length > 1) {
+      // if (message.channel.id === '828431171913515039') {
+      let channelName;
+      if (args[0] == '-d') {
+        args.shift();
+        channelName = args.join('-');
+        message.delete();
+      } else {
         channelName = args.join('-');
       }
 
@@ -30,7 +35,7 @@ module.exports = {
       message.channel.send(`\`\`\`
       
 
-      CHANNEL HAS BEEN CHANGED TO: ${channelName.toUpperCase()}
+      CHANNEL HAS BEEN CHANGED TO: ${channelName}
 
       \`\`\``);
 

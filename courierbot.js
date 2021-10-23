@@ -344,6 +344,7 @@ client.on('ready', async () => {
 
 // reactions to trigger words
 client.on('message', message => {
+  // let now = Date.now();
   if (message.author.bot) return;
   if (!databases[message.guild.id].isOn) return;
   let dabEmoji = message.guild.emojis.cache.find(emoji => emoji.name === 'dab');
@@ -389,6 +390,12 @@ client.on('message', message => {
     if (betweenOneAndTen === 3 || betweenOneAndTen === 7) {
       message.react('🥚');
     }
+    // } else if (message.content.toLowerCase().includes('tony')) {
+    //   if (Date.now() - now < 10000) return;
+    //   else {
+    //     message.channel.send('Anthony');
+    //     now += 10000;
+    //   }
   }
 
   // easter words
