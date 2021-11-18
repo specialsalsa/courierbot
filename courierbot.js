@@ -43,6 +43,47 @@ for (const file of commandFiles) {
 
 const cooldowns = new Discord.Collection();
 
+// trying to get message counts working
+
+let messageArray = [];
+client.on('message', message => {
+  let newMessage = {
+    content: message.content,
+    member: message.member ? message.member.id : 'no member',
+    timestamp: Date.now()
+  };
+  messageArray.push(newMessage);
+
+  messageArray = messageArray.filter(msg => {
+    return (
+      msg.member !== 'no member' &&
+      (Date.now() - msg.timestamp) / 1000 / 60 <= 60
+    );
+  });
+});
+
+const getMessageCount = () => {
+  const messageObj = JSON.stringify({
+    messageCount: messageArray.length
+  });
+  return messageObj;
+};
+
+configController.wss.on('connection', function connection(ws) {
+  const messageObj = getMessageCount();
+  ws.send(messageObj);
+  setInterval(() => {
+    const messageObjInterval = getMessageCount();
+    ws.send(messageObjInterval);
+  }, 10000);
+
+  ws.on('message', function incoming(message) {
+    if (message === 'Remove listeners plz') {
+      ws.removeListener('connection', connection);
+    }
+  });
+});
+
 // command handler
 client.on('message', async message => {
   con.query(
