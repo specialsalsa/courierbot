@@ -31,6 +31,8 @@
         "mongoose": "^5.12.1",
         "mssql": "^6.3.0",
         "mysql": "^2.18.1",
+        "node-fetch": "^2.6.6",
+        "parse-duration": "^1.0.2",
         "sequelize": "^6.3.5",
         "socket.io-client": "^4.1.2",
         "sql": "^0.78.0",

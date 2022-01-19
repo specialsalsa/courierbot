@@ -1,8 +1,6 @@
 const fs = require('fs');
 const Discord = require('discord.js');
 const Endb = require('endb');
-const roleClaim = require('./role-claim');
-const egg = require('./commands/egg');
 const { con } = require('./database');
 const configController = require('./server/configController');
 const {
@@ -15,23 +13,22 @@ require('dotenv').config();
 const token = process.env.TOKEN;
 
 // connecting to database
+
 con.getConnection(function (err) {
   if (err) throw err;
   console.log('Connected!');
 });
+
 // initial prefix setting
 let prefix = '.';
 
-// instantiating discord client and commands collection
 const client = new Discord.Client();
 
 module.exports.client = client;
 client.commands = new Discord.Collection();
 
-// Endb is key-value storage using a sqlite database
 const endb = new Endb('sqlite://courierbot.sqlite');
 
-// reading in command folder
 const commandFiles = fs
   .readdirSync('./commands')
   .filter(file => file.endsWith('.js'));
@@ -72,6 +69,7 @@ const getMessageCount = () => {
 configController.wss.on('connection', function connection(ws) {
   const messageObj = getMessageCount();
   ws.send(messageObj);
+
   setInterval(() => {
     const messageObjInterval = getMessageCount();
     ws.send(messageObjInterval);
@@ -86,13 +84,18 @@ configController.wss.on('connection', function connection(ws) {
 
 // command handler
 client.on('message', async message => {
-  con.query(
-    `SELECT command_prefix FROM nunops_bot.server_config WHERE server_id = 1;`,
-    (err, result) => {
-      if (err) console.log(err);
-      prefix = result[0].command_prefix;
-    }
-  );
+  // this is not working because there's something wrong with the database, need to start storing prefix in mongodb
+
+  // try {
+  //   con.query(
+  //     `SELECT command_prefix FROM courierbot.server_config WHERE server_id = 1;`,
+  //     (err, result) => {
+  //       if (result) prefix = result[0].command_prefix;
+  //     }
+  //   );
+  // } catch (err) {
+  //   console.log(err);
+  // }
 
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
@@ -232,7 +235,7 @@ client.on('message', message => {
     let prefix2 = message.content.split(' ')[1];
 
     con.query(
-      'UPDATE nunops_bot.server_config SET command_prefix = ? WHERE server_id = 1;',
+      'UPDATE courierbot.server_config SET command_prefix = ? WHERE server_id = 1;',
       prefix2,
       err => {
         if (err) console.log(err);
@@ -311,15 +314,16 @@ client.on('message', message => {
   let id_user_type = highestRoleRank;
   let discordID = message.member.id;
   let query =
-    'SELECT discord_user_id FROM nunops_bot.user WHERE discord_user_id = ?;';
+    'SELECT discord_user_id FROM courierbot.user WHERE discord_user_id = ?;';
   con.query(query, discordID, (err, result) => {
     if (err) console.log(err);
     if (result === undefined || result.length == 0) {
       let query =
-        'INSERT INTO nunops_bot.user (discord_user_id, username, kicked, id_user_type, avatar_url) VALUES (?, ?, ?, ?, ?);';
+        'INSERT INTO courierbot.user (discord_user_id, username, kicked, id_user_type, avatar_url) VALUES (?, ?, ?, ?, ?);';
       con.query(
+        // INSERT INTO user_type (name) VALUES (Admin, Mod, Developer, Member, Unverified)
         query,
-        [discordID, username, kicked, id_user_type, thisAvatar],
+        [discordID, username, kicked, id_user_type || 'Member', thisAvatar],
         err => {
           if (err) console.log(err);
         }
@@ -333,6 +337,7 @@ client.on('message', message => {
 client.on('guildMemberUpdate', (oldMember, newMember) => {
   let onDutyChannel = client.channels.cache.get('789950280787034122');
   let supportChannel = client.channels.cache.get('820147201660551228');
+  let announcementChannel = client.channels.cache.get('541727042723512355');
   if (oldMember.roles.cache.size < newMember.roles.cache.size) {
     if (newMember.roles.cache.some(r => r.name == 'On Duty Staff')) {
       onDutyChannel.send(
@@ -340,6 +345,13 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
       );
       supportChannel.send(
         `On Duty Staff: **${newMember.user.username}** is now on duty.`
+      );
+    } else if (
+      !oldMember.roles.cache.some(r => r.name === 'Nitro Booster') &&
+      newMember.roles.cache.some(r => r.name == 'Nitro Booster')
+    ) {
+      announcementChannel.send(
+        `Thank you ${newMember} for boosting the server!`
       );
     }
   } else if (oldMember.roles.cache.size > newMember.roles.cache.size) {
@@ -360,20 +372,21 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 });
 
 // detecting avatar changes and updating database
-client.on('userUpdate', (oldUser, newUser) => {
-  if (oldUser.avatar !== newUser.avatar) {
-    let newAvatarURL = newUser.avatarURL();
-    let discordID = newUser.id;
-    let query =
-      'UPDATE nunops_bot.user SET avatar_url = ? WHERE discord_user_id = ?;';
-    con.query(query, [newAvatarURL, discordID], (error, result) => {
-      if (error) console.log(error);
-    });
-    console.log(
-      `Avatar change detected. Updated database entry with new avatar URL for ${newUser.username}.`
-    );
-  }
-});
+
+// client.on('userUpdate', (oldUser, newUser) => {
+//   if (oldUser.avatar !== newUser.avatar) {
+//     let newAvatarURL = newUser.avatarURL();
+//     let discordID = newUser.id;
+//     let query =
+//       'UPDATE courierbot.user SET avatar_url = ? WHERE discord_user_id = ?;';
+//     con.query(query, [newAvatarURL, discordID], (error, result) => {
+//       if (error) console.log(error);
+//     });
+//     console.log(
+//       `Avatar change detected. Updated database entry with new avatar URL for ${newUser.username}.`
+//     );
+//   }
+// });
 
 // setting bot status
 client.on('ready', async () => {
@@ -454,6 +467,43 @@ client.on('message', message => {
 	} */
 });
 
+const fetch = require('node-fetch');
+
+// client.on('message', async message => {
+//   if (!message.content.includes('.embed')) return;
+//   if (message.author.bot) return;
+
+//   // get the file's URL
+//   const file = message.attachments.first()?.url;
+//   if (!file) return console.log('No attached file found');
+
+//   try {
+//     message.channel.send('Reading the file! Fetching data...');
+
+//     // fetch the file from the external URL
+//     const response = await fetch(file);
+
+//     // if there was an error send a message with the status
+//     if (!response.ok)
+//       return message.channel.send(
+//         'There was an error with fetching the file:',
+//         response.statusText
+//       );
+
+//     // take the response stream and read it to completion
+//     const text = await response.text();
+
+//     if (text) {
+//       // message.channel.send(`\`\`\`${text}\`\`\``);
+
+//       let embeddedJSON = JSON.parse(text);
+//       message.channel.send(embeddedJSON);
+//     }
+//   } catch (error) {
+//     console.log(error);
+//   }
+// });
+
 const cbeaster = new Endb('sqlite://cbeaster.sqlite');
 
 const cbeasterSecret = new Endb('sqlite://cbeastersecret.sqlite');
@@ -472,6 +522,10 @@ const databases = {
     easter: 'zenbog',
     secret: 'zenbogsecret',
     isOn: false
+  },
+  '758113177677332531': {
+    testing: 'testing',
+    isOn: true
   }
 };
 

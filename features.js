@@ -1,9 +1,9 @@
 let features = {
-    addUsersToDatabase: {
-        enabled: false
-    }
+  addUsersToDatabase: {
+    enabled: true
+  }
 };
 
 module.exports = {
-    features
+  features
 };
