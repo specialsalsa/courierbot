@@ -60,16 +60,6 @@ module.exports = {
   async execute(message, args) {
     if (message.author.bot) return;
 
-    if (
-      !message.member.roles.cache.some(
-        role =>
-          role.name === 'Admin' ||
-          role.name === 'Mod' ||
-          role.name === 'Lead Developer'
-      )
-    )
-      return;
-
     // get the file's URL
     const file = message.attachments.first()?.url;
     if (!file) return console.log('No attached file found');
@@ -90,7 +80,10 @@ module.exports = {
         );
 
       // take the response stream and read it to completion
-      const text = await response.text();
+      let text = await response.text();
+
+      text = '{"embed":' + text;
+      text = text.concat('}');
 
       if (text) {
         // message.channel.send(`\`\`\`${text}\`\`\``);

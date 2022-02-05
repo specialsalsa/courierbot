@@ -13,7 +13,7 @@ module.exports = {
       return;
     }
 
-    if (message.channel.id === '889752147623837776') {
+    if (message.channel.id === '935080529957625857') {
       // if (message.channel.id === '828431171913515039') {
       let channelName;
       if (args[0] == '-d') {

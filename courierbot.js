@@ -12,6 +12,10 @@ require('dotenv').config();
 
 const token = process.env.TOKEN;
 
+const stones = new Endb('sqlite://stones.sqlite');
+
+module.exports.stones = stones;
+
 // connecting to database
 
 con.getConnection(function (err) {
@@ -334,42 +338,42 @@ client.on('message', message => {
 });
 
 // setting and deleting on-duty staff message for On Duty and Support channels
-client.on('guildMemberUpdate', (oldMember, newMember) => {
-  let onDutyChannel = client.channels.cache.get('789950280787034122');
-  let supportChannel = client.channels.cache.get('820147201660551228');
-  let announcementChannel = client.channels.cache.get('541727042723512355');
-  if (oldMember.roles.cache.size < newMember.roles.cache.size) {
-    if (newMember.roles.cache.some(r => r.name == 'On Duty Staff')) {
-      onDutyChannel.send(
-        `On Duty Staff: **${newMember.user.username}** is now on duty.`
-      );
-      supportChannel.send(
-        `On Duty Staff: **${newMember.user.username}** is now on duty.`
-      );
-    } else if (
-      !oldMember.roles.cache.some(r => r.name === 'Nitro Booster') &&
-      newMember.roles.cache.some(r => r.name == 'Nitro Booster')
-    ) {
-      announcementChannel.send(
-        `Thank you ${newMember} for boosting the server!`
-      );
-    }
-  } else if (oldMember.roles.cache.size > newMember.roles.cache.size) {
-    if (oldMember.roles.cache.some(r => r.name == 'On Duty Staff')) {
-      let channelArray = [onDutyChannel, supportChannel];
+// client.on('guildMemberUpdate', (oldMember, newMember) => {
+//   let onDutyChannel = client.channels.cache.get('789950280787034122');
+//   let supportChannel = client.channels.cache.get('820147201660551228');
+//   let announcementChannel = client.channels.cache.get('541727042723512355');
+//   if (oldMember.roles.cache.size < newMember.roles.cache.size) {
+//     if (newMember.roles.cache.some(r => r.name == 'On Duty Staff')) {
+//       onDutyChannel.send(
+//         `On Duty Staff: **${newMember.user.username}** is now on duty.`
+//       );
+//       supportChannel.send(
+//         `On Duty Staff: **${newMember.user.username}** is now on duty.`
+//       );
+//     } else if (
+//       !oldMember.roles.cache.some(r => r.name === 'Nitro Booster') &&
+//       newMember.roles.cache.some(r => r.name == 'Nitro Booster')
+//     ) {
+//       announcementChannel.send(
+//         `Thank you ${newMember} for boosting the server!`
+//       );
+//     }
+//   } else if (oldMember.roles.cache.size > newMember.roles.cache.size) {
+//     if (oldMember.roles.cache.some(r => r.name == 'On Duty Staff')) {
+//       let channelArray = [onDutyChannel, supportChannel];
 
-      channelArray.forEach(chan => {
-        chan.messages.fetch({ limit: 10 }).then(msgs => {
-          msgs.forEach(msg => {
-            if (msg.content.includes(newMember.user.username)) {
-              chan.messages.delete(msg.id);
-            }
-          });
-        });
-      });
-    }
-  }
-});
+//       channelArray.forEach(chan => {
+//         chan.messages.fetch({ limit: 10 }).then(msgs => {
+//           msgs.forEach(msg => {
+//             if (msg.content.includes(newMember.user.username)) {
+//               chan.messages.delete(msg.id);
+//             }
+//           });
+//         });
+//       });
+//     }
+//   }
+// });
 
 // detecting avatar changes and updating database
 
@@ -391,7 +395,7 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 // setting bot status
 client.on('ready', async () => {
   await client.user.setPresence({
-    activity: { name: `I'm helping!`, type: 'PLAYING' },
+    activity: { name: `Hooray, I'm helping!`, type: 'PLAYING' },
     status: 'online'
   });
 });
@@ -401,15 +405,13 @@ client.on('message', message => {
   // let now = Date.now();
   if (message.author.bot) return;
   if (!databases[message.guild.id].isOn) return;
-  let dabEmoji = message.guild.emojis.cache.find(emoji => emoji.name === 'dab');
 
   let triggerWords = {
     bread: '🍞',
     pants: '👖',
     // egg: '🥚',
     secret: '🤫',
-    abc: '🤫',
-    dabby: dabEmoji
+    abc: '🤫'
   };
 
   for (word in triggerWords) {
@@ -440,31 +442,11 @@ client.on('message', message => {
       (messageVerticalBarLength !== 0 && messageVerticalBarLength % 4 == 0)
     )
       return;
-    let betweenOneAndTen = Math.floor(Math.random() * 11);
+    let betweenOneAndTen = Math.floor(Math.random() * 10) + 1;
     if (betweenOneAndTen === 3 || betweenOneAndTen === 7) {
       message.react('🥚');
     }
-    // } else if (message.content.toLowerCase().includes('tony')) {
-    //   if (Date.now() - now < 10000) return;
-    //   else {
-    //     message.channel.send('Anthony');
-    //     now += 10000;
-    //   }
   }
-
-  // easter words
-
-  /* 	if (message.content.toLowerCase().includes('chicken')) {
-		message.react('🐣');
-	};
-
-	if (message.content.toLowerCase().includes('easter')) {
-		message.react('🎊');
-	};
-
-	if (message.content.toLowerCase().includes('sun')) {
-		message.react('🌞');
-	} */
 });
 
 const fetch = require('node-fetch');
@@ -516,7 +498,7 @@ const databases = {
   '531182018571141132': {
     easter: 'cbeaster',
     secret: 'cbeasterSecret',
-    isOn: true
+    isOn: false
   },
   '768557939052249090': {
     easter: 'zenbog',
@@ -525,6 +507,9 @@ const databases = {
   },
   '758113177677332531': {
     testing: 'testing',
+    isOn: true
+  },
+  '897551101530890311': {
     isOn: true
   }
 };
@@ -545,43 +530,43 @@ const databases = {
 // 	}
 // 	});
 
-const findEgg = async message => {
-  let easterDB = this[databases[message.guild.id].easter];
-  let currentEggs = await easterDB.get(message.member.id);
+// const findEgg = async message => {
+//   let easterDB = this[databases[message.guild.id].easter];
+//   let currentEggs = await easterDB.get(message.member.id);
 
-  if (!currentEggs) {
-    await easterDB.set(message.member.id, 1);
-    message.channel.send(
-      `Congrats, ${message.member.displayName}! You have found an egg!`
-    );
-    message.channel.send(`${message.member.displayName} now has 1 egg.`);
-  } else {
-    currentEggs++;
-    await easterDB.set(message.member.id, currentEggs);
-    message.channel.send(
-      `Congrats, ${message.member.displayName}! You have found an egg!`
-    );
-    message.channel.send(
-      `${message.member.displayName} now has ${currentEggs} eggs.`
-    );
-  }
-};
+//   if (!currentEggs) {
+//     await easterDB.set(message.member.id, 1);
+//     message.channel.send(
+//       `Congrats, ${message.member.displayName}! You have found an egg!`
+//     );
+//     message.channel.send(`${message.member.displayName} now has 1 egg.`);
+//   } else {
+//     currentEggs++;
+//     await easterDB.set(message.member.id, currentEggs);
+//     message.channel.send(
+//       `Congrats, ${message.member.displayName}! You have found an egg!`
+//     );
+//     message.channel.send(
+//       `${message.member.displayName} now has ${currentEggs} eggs.`
+//     );
+//   }
+// };
 
 // gave me an egg for testing purposes
-client.on('message', async message => {
-  if (message.content.toLowerCase().includes('.gibegg')) {
-    let easterDB = this[databases[message.guild.id].easter];
-    // if (message.member.roles.cache.find(r => r.name === "Lead Developer")) {
-    let authorEggs = await easterDB.get(message.member.id);
-    authorEggs++;
-    await easterDB.set(message.member.id, authorEggs);
-    message.channel.send(`There, I gave you an egg. Cheater.`);
-    message.channel.send(
-      `${message.member.displayName} now has ${authorEggs} eggs.`
-    );
-  }
-  // }
-});
+// client.on('message', async message => {
+//   if (message.content.toLowerCase().includes('.gibegg')) {
+//     let easterDB = this[databases[message.guild.id].easter];
+//     // if (message.member.roles.cache.find(r => r.name === "Lead Developer")) {
+//     let authorEggs = await easterDB.get(message.member.id);
+//     authorEggs++;
+//     await easterDB.set(message.member.id, authorEggs);
+//     message.channel.send(`There, I gave you an egg. Cheater.`);
+//     message.channel.send(
+//       `${message.member.displayName} now has ${authorEggs} eggs.`
+//     );
+//   }
+//   // }
+// });
 
 // listed members with eggs for easter event
 
@@ -730,47 +715,47 @@ client.on('message', async message => {
 
 // registering slash commands
 
-client.api
-  .applications('781436885020049458')
-  .guilds('531182018571141132')
-  .commands.post({
-    data: {
-      name: 'worth',
-      description: 'calculates $/mi. example: .worth 5mi $15',
-      options: [
-        {
-          name: 'payout',
-          description: 'payout of order',
-          type: 3,
-          required: true
-        },
-        {
-          name: 'mileage',
-          description: 'mileage of order',
-          type: 3,
-          required: true
-        }
-      ]
-    }
-  });
+// client.api
+//   .applications('781436885020049458')
+//   .guilds('531182018571141132')
+//   .commands.post({
+//     data: {
+//       name: 'worth',
+//       description: 'calculates $/mi. example: .worth 5mi $15',
+//       options: [
+//         {
+//           name: 'payout',
+//           description: 'payout of order',
+//           type: 3,
+//           required: true
+//         },
+//         {
+//           name: 'mileage',
+//           description: 'mileage of order',
+//           type: 3,
+//           required: true
+//         }
+//       ]
+//     }
+//   });
 
-client.ws.on('INTERACTION_CREATE', async interaction => {
-  function dollarsPerMile(payout, mileage) {
-    payout = payout.replace(/[&\/\\#,+()$~%'":*?<>{}]/g, '');
-    mileage = mileage.replace(/[&\/\\#,+()$~%'":*?mi<>{}]/g, '');
-    return Math.round((payout / mileage) * 100) / 100;
-  }
+// client.ws.on('INTERACTION_CREATE', async interaction => {
+//   function dollarsPerMile(payout, mileage) {
+//     payout = payout.replace(/[&\/\\#,+()$~%'":*?<>{}]/g, '');
+//     mileage = mileage.replace(/[&\/\\#,+()$~%'":*?mi<>{}]/g, '');
+//     return Math.round((payout / mileage) * 100) / 100;
+//   }
 
-  client.api.interactions(interaction.id, interaction.token).callback.post({
-    data: {
-      type: 4,
-      data: {
-        // prettier-ignore
-        content: `This order pays $${dollarsPerMile(interaction.data.options[0].value, interaction.data.options[1].value)} / mi.`
-      }
-    }
-  });
-});
+//   client.api.interactions(interaction.id, interaction.token).callback.post({
+//     data: {
+//       type: 4,
+//       data: {
+//         // prettier-ignore
+//         content: `This order pays $${dollarsPerMile(interaction.data.options[0].value, interaction.data.options[1].value)} / mi.`
+//       }
+//     }
+//   });
+// });
 
 // cleared easter egg stash for staff for equal participation in egg hunt
 
