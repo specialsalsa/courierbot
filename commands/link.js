@@ -15,7 +15,12 @@ module.exports = {
           linkToAdd.includes('postmates.com') ||
           linkToAdd.includes('roadie.com') ||
           linkToAdd.includes('instacart.com')
-        )
+        ) &&
+        !message.member.roles.cache.some(r => {
+          r.name == 'Bread Police' ||
+            r.name == 'Tech Wizard' ||
+            r.name == 'The Bread Father';
+        })
       ) {
         message.channel.send(
           'Message Sal to manually add links from domains other than the gig apps.'
@@ -39,7 +44,18 @@ module.exports = {
       const thisLink = await cb.links.get(args[0]);
       message.channel.send(thisLink);
     } else if (args[0] == 'all') {
-      message.channel.send(await cb.links.entries());
+      const links = await cb.links.entries();
+
+      const formattedLinks = links
+        .map(link => {
+          return `${link[0]}: ${link[1]}\n`;
+        })
+        .join('');
+
+      console.log(formattedLinks);
+
+      message.channel.send(`=== LIST OF ALL LINKS ===
+${formattedLinks}`);
     } else if (args[0] == 'help') {
       message.channel
         .send(`Use this to add or pull up helpful links from the gig app websites to assist other members.
