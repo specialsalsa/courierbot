@@ -1,6 +1,6 @@
 const fs = require('fs');
 const Discord = require('discord.js');
-const Endb = require('endb');
+// const Endb = require('endb');
 const { con } = require('./database');
 const configController = require('./server/configController');
 const {
@@ -9,12 +9,13 @@ const {
 } = require('./commands/startChannelTimer');
 let features = require('./features').features;
 require('dotenv').config();
+const syllables = require('syllables');
 
 const token = process.env.TOKEN;
 
-const stones = new Endb('sqlite://stones.sqlite');
+// const stones = new Endb('sqlite://stones.sqlite');
 
-module.exports.stones = stones;
+// module.exports.stones = stones;
 
 // connecting to database
 
@@ -23,15 +24,35 @@ con.getConnection(function (err) {
   console.log('Connected!');
 });
 
+const mongoose = require('mongoose');
+mongoose
+  .connect('mongodb://127.0.0.1:27017/test')
+  .then(() => console.log('Connected to MongoDB local server.'));
+
 // initial prefix setting
 let prefix = '.';
 
-const client = new Discord.Client();
+const client = new Discord.Client({
+  intents: [
+    Discord.Intents.FLAGS.GUILDS,
+    Discord.Intents.FLAGS.GUILD_MEMBERS,
+    Discord.Intents.FLAGS.GUILD_BANS,
+    Discord.Intents.FLAGS.GUILD_INTEGRATIONS,
+    Discord.Intents.FLAGS.GUILD_WEBHOOKS,
+    Discord.Intents.FLAGS.GUILD_INVITES,
+    Discord.Intents.FLAGS.GUILD_VOICE_STATES,
+    Discord.Intents.FLAGS.GUILD_PRESENCES,
+    Discord.Intents.FLAGS.GUILD_MESSAGES,
+    Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+    Discord.Intents.FLAGS.GUILD_MESSAGE_TYPING,
+    Discord.Intents.FLAGS.DIRECT_MESSAGES
+  ]
+});
 
 module.exports.client = client;
 client.commands = new Discord.Collection();
 
-const endb = new Endb('sqlite://courierbot.sqlite');
+// const endb = new Endb('sqlite://courierbot.sqlite');
 
 const commandFiles = fs
   .readdirSync('./commands')
@@ -47,11 +68,12 @@ const cooldowns = new Discord.Collection();
 // trying to get message counts working
 
 let messageArray = [];
-client.on('message', message => {
+client.on('messageCreate', message => {
   let newMessage = {
     content: message.content,
-    member: message.member ? message.member.id : 'no member',
-    timestamp: Date.now()
+    member: message.member ? message.member : 'no member',
+    timestamp: Date.now(),
+    syllables: syllables(message.content)
   };
   messageArray.push(newMessage);
 
@@ -61,6 +83,31 @@ client.on('message', message => {
       (Date.now() - msg.timestamp) / 1000 / 60 <= 60
     );
   });
+
+  let thirdToLast = messageArray[messageArray.length - 3];
+  let secondToLast = messageArray[messageArray.length - 2];
+  let lastMessage = messageArray[messageArray.length - 1];
+
+  const hasSyllables = (message, syllables) => {
+    return message.syllables === syllables;
+  };
+
+  if (!hasSyllables(lastMessage, 5)) return;
+  if (!hasSyllables(secondToLast, 7)) return;
+  if (!hasSyllables(thirdToLast, 5)) return;
+  if (message.author.bot) return;
+  let lastThreeMessages = messageArray.slice(messageArray.length - 3);
+  for (let msg of lastThreeMessages) {
+    let content = msg.content.split(' ');
+    for (word of content) {
+      if (syllables(word) === 0) return;
+    }
+  }
+
+  message.reply(`*${thirdToLast.content}*
+*${secondToLast.content}*
+*${lastMessage.content}*
+    ~${thirdToLast.member.displayName}, ${secondToLast.member.displayName}, and ${lastMessage.member.displayName}`);
 });
 
 const getMessageCount = () => {
@@ -87,7 +134,7 @@ configController.wss.on('connection', function connection(ws) {
 });
 
 // command handler
-client.on('message', async message => {
+client.on('messageCreate', async message => {
   // this is not working because there's something wrong with the database, need to start storing prefix in mongodb
 
   // try {
@@ -175,15 +222,15 @@ client.once('ready', () => {
   configController.sendMemberCounts();
 });
 
-const tempbans = new Endb('sqlite://courierbot.sqlite');
+// const tempbans = new Endb('sqlite://courierbot.sqlite');
 
-const links = new Endb('sqlite://links.sqlite');
+// const links = new Endb('sqlite://links.sqlite');
 
-module.exports.links = links;
+// module.exports.links = links;
 
-module.exports.tempbans = tempbans;
+// module.exports.tempbans = tempbans;
 
-client.on('message', async message => {
+client.on('messageCreate', async message => {
   if (message.content.includes('!tempban')) {
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     let timeUntilUnbannedInput = args[1];
@@ -209,11 +256,15 @@ client.on('message', async message => {
   }
 });
 
-client.on('message', message => {
+client.on('messageCreate', message => {
   if (message.channel.id == '889752147623837776') {
     startChannelTimer(message);
   }
 });
+
+const Link = mongoose.model('Link', { keyword: String, link: String });
+
+module.exports.Link = Link;
 
 // object of role rankings
 const roles = {
@@ -227,7 +278,7 @@ const roles = {
 };
 
 // set prefix command for staff
-client.on('message', message => {
+client.on('messageCreate', message => {
   if (message.content.includes('setprefix')) {
     if (
       !message.member.roles.cache.some(
@@ -252,7 +303,7 @@ client.on('message', message => {
 
 // let messageArray = [];
 
-// client.on('message', message => {
+// client.on('messageCreate', message => {
 //   let newMessage = {
 //     content: message.content,
 //     member: message.member.id,
@@ -272,7 +323,7 @@ client.on('message', message => {
 // });
 
 // adding users to database
-client.on('message', message => {
+client.on('messageCreate', message => {
   if (message.author.bot) return;
   if (!databases[message.guild.id].isOn) return;
   if (!features.addUsersToDatabase.enabled) return;
@@ -400,11 +451,91 @@ client.on('ready', async () => {
   });
 });
 
+// const mongoose = require('mongoose');
+// mongoose.connect('mongo');
+
+// client.on('threadCreate', async thread => {
+//   if (thread.joinable) await thread.join();
+
+//   client.on('messageCreate', async message => {
+//     if (message.content.toLowerCase().includes('wha')) {
+//       if (message.content.toLowerCase().includes('.whacount')) return;
+//       let currentWha = await wha.get(message.member.id);
+//       if (!currentWha) await wha.set(message.member.id, 1);
+//       else await wha.set(message.member.id, currentWha + 1);
+//     }
+//   });
+// });
+
+const whaWrapper = (message, memberID) => {
+  if (message.author.bot) return;
+
+  if (!databases[message.guild.id].isOn) return;
+
+  if (message.content.includes('wha')) {
+    if (message.content.includes('.whacount')) return;
+
+    con.query(
+      `SELECT wha_count FROM courierbot.wha WHERE wha_id = ?;`,
+      memberID,
+      (err, result) => {
+        if (err) console.log(err);
+        if (result) {
+          console.log(result);
+          result = result + 1;
+          con.query(
+            `UPDATE courierbot.wha SET wha_count = ${result} WHERE wha_id = ${memberID}`
+          );
+        } else if (result.length == 0 || !result) {
+          con.query(
+            `INSERT INTO courierbot.wha (wha_id, wha_count) VALUES (?, ?)`,
+            [memberID, 1],
+            err => {
+              if (err) console.log(err);
+            }
+          );
+        }
+        return result;
+      }
+    );
+  }
+};
+
+module.exports.whaWrapper = whaWrapper;
+
 // reactions to trigger words
-client.on('message', message => {
+client.on('messageCreate', async message => {
   // let now = Date.now();
   if (message.author.bot) return;
+
   if (!databases[message.guild.id].isOn) return;
+
+  if (message.content.includes('wha')) {
+    if (message.content.includes('.whacount')) return;
+
+    con.query(
+      `SELECT wha_count FROM courierbot.wha WHERE wha_id = ?;`,
+      message.member.id,
+      (err, result) => {
+        if (err) console.log(err);
+        if (result) {
+          con.query(
+            `UPDATE courierbot.wha SET wha_count = ${
+              result + 1
+            } WHERE wha_id = ${message.member.id}`
+          );
+        } else {
+          con.query(
+            `INSERT INTO courierbot.wha (wha_id, wha_count) VALUES (?, ?)`,
+            [message.member.id, 1],
+            err => {
+              if (err) console.log(err);
+            }
+          );
+        }
+      }
+    );
+  }
 
   let triggerWords = {
     bread: '🍞',
@@ -414,19 +545,48 @@ client.on('message', message => {
     abc: '🤫'
   };
 
+  if (message.content.includes('.renameTrixie')) {
+    let trixie = message.guild.members.cache.find(
+      member => member.id == '892228081845162004'
+    );
+
+    if (!trixie) message.channel.send(`Welp`);
+    else {
+      trixie.displayName = 't';
+    }
+  }
+
+  if (message.content.includes('Mike!')) {
+    message.channel.send('Angelo!');
+  }
+
+  if (message.content.includes('Angelo!')) {
+    message.channel.send('Mike!');
+  }
+
+  // if (message.content.toLowerCase().includes('wha')) {
+  //   if (message.content.toLowerCase().includes('.whacount')) return;
+  //   let currentWha = await wha.get(message.member.id);
+  //   if (!currentWha) await wha.set(message.member.id, 1);
+  //   else await wha.set(message.member.id, currentWha + 1);
+  // }
+
   for (word in triggerWords) {
     if (message.content.toLowerCase().includes(word)) {
       if (message.author.bot) return;
       if (message.content[0] === '.') return;
-      //prettier-ignore
-      let messageColonLength = message.content.replace(/[^:]/g, "").length;
+
       //prettier-ignore
       let messageVerticalBarLength = message.content.replace(/[^\|]/g, "").length;
+
+      const emojiRegex = new RegExp(`^:*${word}*:$`);
+
       if (
-        (messageColonLength !== 0 && messageColonLength % 2 == 0) ||
+        message.content.match(emojiRegex) ||
         (messageVerticalBarLength !== 0 && messageVerticalBarLength % 4 == 0)
       )
         return;
+
       message.react(triggerWords[word]);
     }
   }
@@ -449,9 +609,84 @@ client.on('message', message => {
   }
 });
 
-const fetch = require('node-fetch');
+let haikuNow = Date.now();
 
-// client.on('message', async message => {
+client.on('messageCreate', message => {
+  if (message.channel.id !== '933955829013553152') return;
+  if (syllables(message.content) !== 17) return;
+  if (message.author.bot) return;
+  if (!message.member.user.id) return;
+
+  const messageArray = message.content.split(' ');
+
+  for (let word of messageArray) {
+    if (syllables(word) === 0) return;
+  }
+
+  const getFirstLine = () => {
+    let syllableCount = 0;
+    let counter = 0;
+    let firstLine = [];
+    for (let word of messageArray) {
+      if (syllableCount > 5) return 0;
+      if (syllableCount === 5) return { firstLine, counter };
+      counter++;
+      firstLine.push(word);
+      syllableCount += syllables(word);
+    }
+  };
+
+  const firstLineObj = getFirstLine();
+
+  if (!firstLineObj) return;
+
+  const { firstLine, counter } = firstLineObj;
+
+  const getSecondLine = () => {
+    let lastTwoLines = messageArray.slice(counter);
+    let syllableCount = 0;
+    let secondLineCounter = counter;
+    let secondLine = [];
+
+    for (let word of lastTwoLines) {
+      if (syllableCount > 7) return 0;
+      if (syllableCount === 7) return { secondLine, secondLineCounter };
+
+      secondLineCounter++;
+      secondLine.push(word);
+      syllableCount += syllables(word);
+    }
+  };
+
+  const secondLineObj = getSecondLine();
+
+  if (!secondLineObj) return;
+
+  const { secondLine, secondLineCounter } = secondLineObj;
+
+  const getThirdLine = () => {
+    let thirdLine = messageArray.slice(secondLineCounter);
+    return thirdLine;
+  };
+
+  const thirdLine = getThirdLine();
+
+  if (!thirdLine) return;
+
+  let currentTimeOfMessage = Date.now();
+
+  if ((currentTimeOfMessage - haikuNow) / 1000 / 60 / 60 < 8) return;
+  else haikuNow = currentTimeOfMessage;
+
+  message.reply(`*${firstLine.join(' ')}*
+*${secondLine.join(' ')}*
+*${thirdLine.join(' ')}*\n
+    ~${message.member.displayName}`);
+});
+
+// const fetch = require('node-fetch');
+
+// client.on('messageCreate', async message => {
 //   if (!message.content.includes('.embed')) return;
 //   if (message.author.bot) return;
 
@@ -486,13 +721,13 @@ const fetch = require('node-fetch');
 //   }
 // });
 
-const cbeaster = new Endb('sqlite://cbeaster.sqlite');
+// const cbeaster = new Endb('sqlite://cbeaster.sqlite');
 
-const cbeasterSecret = new Endb('sqlite://cbeastersecret.sqlite');
+// const cbeasterSecret = new Endb('sqlite://cbeastersecret.sqlite');
 
-const zenbog = new Endb('sqlite://zenbog.sqlite');
+// const zenbog = new Endb('sqlite://zenbog.sqlite');
 
-const zenbogsecret = new Endb('sqlite://zenbogsecret.sqlite');
+// const zenbogsecret = new Endb('sqlite://zenbogsecret.sqlite');
 
 const databases = {
   '531182018571141132': {
@@ -516,7 +751,7 @@ const databases = {
 
 // Easter egg hunt
 
-// client.on('message', async message => {
+// client.on('messageCreate', async message => {
 // 	if (databases[message.guild.id].isOn == 0) return;
 // 	if (message.content.length === 37 ||
 // 	message.content.length === 81) {
@@ -524,7 +759,7 @@ const databases = {
 // 	}
 // });
 
-// client.on('message', async message => {
+// client.on('messageCreate', async message => {
 // 	if (message.content.includes('.testshit')) {
 // 		console.log(databases['768557939052249090'].secret)
 // 	}
@@ -553,7 +788,7 @@ const databases = {
 // };
 
 // gave me an egg for testing purposes
-// client.on('message', async message => {
+// client.on('messageCreate', async message => {
 //   if (message.content.toLowerCase().includes('.gibegg')) {
 //     let easterDB = this[databases[message.guild.id].easter];
 //     // if (message.member.roles.cache.find(r => r.name === "Lead Developer")) {
@@ -570,7 +805,7 @@ const databases = {
 
 // listed members with eggs for easter event
 
-// client.on('message', async message => {
+// client.on('messageCreate', async message => {
 // 	if (message.content.toLowerCase().includes('leaderboard')) {
 // 	let membersWithEggs = message.guild.members.cache.filter(async m => await cbeaster.get(m.id) !== undefined);
 
@@ -583,31 +818,31 @@ const databases = {
 
 // birthdays
 
-client.on('ready', async () => {
-  await birthdays.set('triggeredBirthday', 0);
-});
+// client.on('ready', async () => {
+//   await birthdays.set('triggeredBirthday', 0);
+// });
 
-const birthdays = new Endb('sqlite://birthdays.sqlite');
+// const birthdays = new Endb('sqlite://birthdays.sqlite');
 
 //happy birthday message
-client.on('message', async message => {
-  if (message.author.bot) return;
-  let thisDateUser = await birthdays.get(message.member.id);
-  thisDateUser = new Date(thisDateUser);
-  let nowDate = new Date();
-  let todayDate = nowDate.getDate();
-  let todayMonth = nowDate.getMonth() + 1;
+// client.on('messageCreate', async message => {
+//   if (message.author.bot) return;
+//   let thisDateUser = await birthdays.get(message.member.id);
+//   thisDateUser = new Date(thisDateUser);
+//   let nowDate = new Date();
+//   let todayDate = nowDate.getDate();
+//   let todayMonth = nowDate.getMonth() + 1;
 
-  if ((await birthdays.get('triggeredBirthday')) == 0) {
-    if (
-      todayMonth == thisDateUser.getMonth() + 1 &&
-      todayDate == thisDateUser.getDate()
-    ) {
-      await birthdays.set('triggeredBirthday', 1);
-      message.channel.send(`HAPPY BIRTHDAY, ${message.author}!!!`);
-    }
-  }
-});
+//   if ((await birthdays.get('triggeredBirthday')) == 0) {
+//     if (
+//       todayMonth == thisDateUser.getMonth() + 1 &&
+//       todayDate == thisDateUser.getDate()
+//     ) {
+//       await birthdays.set('triggeredBirthday', 1);
+//       message.channel.send(`HAPPY BIRTHDAY, ${message.author}!!!`);
+//     }
+//   }
+// });
 
 // Cinco De Mayo
 const tacoIngredients = {
@@ -621,40 +856,40 @@ const tacoIngredients = {
   beans: 'beans'
 };
 
-const tacos = new Endb('sqlite://tacos.sqlite');
+// const tacos = new Endb('sqlite://tacos.sqlite');
 
-const messageCounts = new Endb('sqlite://messagecounts.sqlite');
+// const messageCounts = new Endb('sqlite://messagecounts.sqlite');
 
 // function to find taco ingredients for 5/5 event
-const findIngredient = async message => {
-  let currentIngredients = await tacos.get(message.member.id);
-  if (!currentIngredients) {
-    currentIngredients = {
-      shell: 0,
-      lettuce: 0,
-      cheese: 0,
-      tomatoes: 0,
-      beef: 0
-    };
-  }
-  let thisIngredient =
-    Object.keys(tacoIngredients)[
-      Math.floor(Math.random() * Object.keys(tacoIngredients).length)
-    ];
-  if (!currentIngredients[thisIngredient]) {
-    currentIngredients[thisIngredient] = 1;
-  } else {
-    currentIngredients[thisIngredient]++;
-  }
-  await tacos.set(message.member.id, currentIngredients);
-  message.channel.send(
-    `Congrats, ${message.author.username}! You have found a taco ingredient! One ${thisIngredient} has been added to your collection.`
-  );
-};
+// const findIngredient = async message => {
+//   let currentIngredients = await tacos.get(message.member.id);
+//   if (!currentIngredients) {
+//     currentIngredients = {
+//       shell: 0,
+//       lettuce: 0,
+//       cheese: 0,
+//       tomatoes: 0,
+//       beef: 0
+//     };
+//   }
+//   let thisIngredient =
+//     Object.keys(tacoIngredients)[
+//       Math.floor(Math.random() * Object.keys(tacoIngredients).length)
+//     ];
+//   if (!currentIngredients[thisIngredient]) {
+//     currentIngredients[thisIngredient] = 1;
+//   } else {
+//     currentIngredients[thisIngredient]++;
+//   }
+//   await tacos.set(message.member.id, currentIngredients);
+//   message.channel.send(
+//     `Congrats, ${message.author.username}! You have found a taco ingredient! One ${thisIngredient} has been added to your collection.`
+//   );
+// };
 
 // gave taco ingredients for 5/5 event
 
-// client.on('message', async message => {
+// client.on('messageCreate', async message => {
 // 	let thisUser = message.member.id;
 // 	let userMessageCount = await messageCounts.get(message.member.id);
 // 	if (!userMessageCount) userMessageCount = 1;
@@ -680,7 +915,7 @@ const findIngredient = async message => {
 // });
 
 // leaderboard command for easter event
-client.on('message', async message => {
+client.on('messageCreate', async message => {
   if (message.content.toLowerCase().includes('.egg leaderboard')) {
     let easterDB = this[databases[message.guild.id].easter];
     let allUserIDs = [];
@@ -759,7 +994,7 @@ client.on('message', async message => {
 
 // cleared easter egg stash for staff for equal participation in egg hunt
 
-// client.on('message', async message => {
+// client.on('messageCreate', async message => {
 // 	if (message.content.includes('.nukestaff')) {
 // 		let allUserIDs = [];
 
@@ -782,16 +1017,16 @@ client.login(token);
 
 // consolidated module.exports into one object
 module.exports = {
-  endb,
-  // client: client,
-  cbeasterSecret,
-  cbeaster,
-  zenbogsecret,
-  zenbog,
-  databases,
-  birthdays,
-  tacoIngredients,
-  tacos,
-  messageCounts,
-  tempbans
+  // endb,
+  client: client,
+  // cbeasterSecret,
+  // cbeaster,
+  // zenbogsecret,
+  // zenbog,
+  databases
+  // birthdays,
+  // tacoIngredients,
+  // tacos,
+  // messageCounts,
+  // tempbans
 };

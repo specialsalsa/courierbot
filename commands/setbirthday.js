@@ -1,24 +1,30 @@
 const cb = require('../courierbot.js');
+const mongoose = require('mongoose');
+
+const Birthday = mongoose.model('Birthday', { user: String, date: Date });
 
 module.exports = {
   name: 'setbirthday',
   description:
     'Adds your birthday to the calendar and gives you a birthday message on that day. Format: .setbirthday <month> <day>',
   async execute(message, args) {
-    let month = args[0];
-    let day = args[1] + 1;
-    let today = new Date();
+    const month = args[0];
+    const day = args[1] + 1;
+    const today = new Date();
 
-    let thisYear = today.getFullYear();
+    const thisYear = today.getFullYear();
 
     console.log(args[0]);
 
     try {
-      let thisBirthday = new Date(`${thisYear}-${month}-${day}`);
+      const thisBirthday = new Date(thisYear, month, day);
+      const thisUser = message.author.id;
 
-      await cb.birthdays.set(message.member.id, thisBirthday);
+      const birthday = new Birthday({ user: thisUser, date: thisBirthday });
+      await birthday.save();
     } catch (e) {
       message.channel.send(`Error setting birthday`);
+      console.log(e);
     }
 
     message.channel.send(`Successfully set your birthday!`);
