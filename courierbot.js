@@ -89,6 +89,8 @@ client.on('messageCreate', message => {
   let lastMessage = messageArray[messageArray.length - 1];
 
   const hasSyllables = (message, syllables) => {
+    if (!message) return;
+    if (!message.syllables) return;
     return message.syllables === syllables;
   };
 
@@ -545,6 +547,66 @@ client.on('messageCreate', async message => {
     abc: '🤫'
   };
 
+  const badWords = [
+    'biden',
+    'trump',
+    'democrat',
+    'republican',
+    'democrats',
+    'republicans',
+    'liberal',
+    'liberals',
+    'radical left',
+    'far right',
+    'far left',
+    'conservatives'
+  ];
+
+  for (word of badWords) {
+    if (message.content.toLowerCase().includes(word)) {
+      if (message.author.bot) return;
+      if (message.content[0] === '.') return;
+
+      const words = message.content.split(' ');
+
+      let newContent = message.content;
+
+      function getUserFromMention(mention) {
+        if (!mention) return;
+
+        if (!mention.startsWith('<@')) return;
+
+        if (mention.startsWith('<@') && mention.endsWith('>')) {
+          mention = mention.slice(2, -1);
+
+          if (mention.startsWith('!')) {
+            mention = mention.slice(1);
+          }
+
+          return client.users.cache.get(mention);
+        } else {
+          return null;
+        }
+      }
+
+      for (eachWord of words) {
+        if (getUserFromMention(eachWord)) {
+          newContent = newContent.replace(
+            eachWord,
+            getUserFromMention(eachWord).username
+          );
+        }
+      }
+
+      message.guild.channels.cache.find(
+        channel => channel.id === '1038931076279705781'
+      ).send(`Potential trouble in ${message.channel}:
+      ${message.author}: "${newContent}"
+      ${`https://discord.com/channels/${message.guildId}/${message.channelId}/${message.id}`}`);
+      return;
+    }
+  }
+
   if (message.content.includes('.renameTrixie')) {
     let trixie = message.guild.members.cache.find(
       member => member.id == '892228081845162004'
@@ -576,14 +638,13 @@ client.on('messageCreate', async message => {
       if (message.author.bot) return;
       if (message.content[0] === '.') return;
 
-      //prettier-ignore
-      let messageVerticalBarLength = message.content.replace(/[^\|]/g, "").length;
+      const emojiRegex = new RegExp(`:.*${word}.*:`);
 
-      const emojiRegex = new RegExp(`^:*${word}*:$`);
+      const verticalBarRegex = new RegExp('\\|\\|.+\\|\\|');
 
       if (
         message.content.match(emojiRegex) ||
-        (messageVerticalBarLength !== 0 && messageVerticalBarLength % 4 == 0)
+        message.content.match(verticalBarRegex)
       )
         return;
 
@@ -917,6 +978,7 @@ const tacoIngredients = {
 // leaderboard command for easter event
 client.on('messageCreate', async message => {
   if (message.content.toLowerCase().includes('.egg leaderboard')) {
+    return;
     let easterDB = this[databases[message.guild.id].easter];
     let allUserIDs = [];
     let eggList = [];
